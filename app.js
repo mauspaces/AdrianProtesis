@@ -169,16 +169,16 @@
   $('notasCap').innerHTML = [
     '<b>Agarre:</b> alcanza para un vaso, una botella de medio litro, el celular o una bolsa ligera.',
     '<b>Gancho:</b> cargar una bolsa con los dedos cerrados. Más de ~1.5 kg hace que el servo se esfuerce y se caliente; no es para levantar peso.',
-    '<b>Muñeca:</b> gira 80° hacia cada lado desde la posición neutra (pulgar arriba), como un antebrazo real. Un tope físico no la deja pasar. Con algo pesado en la mano, ayúdale con la otra mano.',
+    '<b>Muñeca:</b> pasiva, se gira con la otra mano: hace clic cada 20° y topa a 80° de cada lado (como un antebrazo real). Sostiene ≈' + (S.clics ? S.clics.par_Nm : 0.4) + ' N·m antes de saltar de clic.',
     '<b>No es para</b> apoyarse, empujar el cuerpo o golpes: el plástico y el socket no están hechos para eso.'].map(x => `<li>${x}</li>`).join('');
   const RECOS = {
     'Impresión': ['Todo en <b>PETG</b>: blanco para antebrazo, palma y dedos; negro (grafito) para el socket, la muñeca y el mecanismo.', 'Imprime primero <b>el índice y sus 2 bielitas</b> y ármalo: si las bisagras quedan duras o flojas, ajusta antes de imprimir todo.', 'Paredes de 4 líneas y relleno 25–35 %; <b>100 %</b> en el eje de los nudillos, el eje de la muñeca, el acople, el carro, los balancines y todas las bielas.', 'El eje de los nudillos se imprime <b>acostado sobre su cara plana</b>.', 'Socket de pie, soportes solo dentro de las alas; lija el borde.', 'Repasa barrenos con broca: Ø2.3 (M2 libre), Ø1.7 (M2 que se rosca), Ø5.4 (eje de los nudillos), Ø3.3 (M3 libre).'],
     'Mecanismo': ['El <b>diferencial</b> debe moverse solo con el dedo: si un balancín se traba, repasa su barreno con broca Ø2.3.', 'Una gota de grasa de litio en el buje de la muñeca, el canal del carro y cada tornillo-perno.', 'Las bieletas se <b>enganchan</b> (ojo en C) en la palanca de cada dedo: si quedan flojas, una gota de pegamento de contacto en el perno, no en el ojo.', 'Pon el seguro del pulgar en <b>20°</b> para la botella y en <b>35°</b> para la pinza.'],
-    'Armado': ['Centra el servo de la mano en 0° (abierta) <b>antes</b> de poner su brazo.', 'Insertos de latón M2.5/M3 si vas a desarmar seguido (los tornillos directos en plástico se barren).', 'Pasa el cable del servo de la mano por el eje hueco <b>antes</b> de bajar el eje, y deja ~3 cm flojos para el giro de la muñeca.', 'Recorta el cuerno doble del MG90S a Ø20 mm: así no toca el tope.', 'Corta las orejas del MG995 extra (segueta fina y lija): las dos mitades de la palma lo aprietan.', 'Mide tu MG90S antes de imprimir el collarín: del fondo a las orejas 15.9 mm y de las orejas a la punta del eje 10 mm. Si cambia, hay que mover la placa.'],
-    'Electrónica y batería': ['Batería LiPo 2S <b>con protección (BMS)</b>; nunca bajar de 6.4 V.', 'Carga con el cargador USB-C 2S; la primera vez, vigílala. No la cargues tapada o al sol.', 'Fusible o polifusible de 3 A a la salida de la batería.', 'Programa la mano: abierta = 0°, cerrada = ' + S.servo_cierre + '° (con el diferencial).', 'Programa la muñeca: 90° = neutra (pulgar arriba); límites 13° y 167° (±77°) para no empujar contra el tope.', 'Aísla la tarjeta con termocontráctil o una mano de barniz: el sudor llega por el socket.'],
+    'Armado': ['Centra el servo de la mano en 0° (abierta) <b>antes</b> de poner su brazo.', 'Insertos de latón M2.5/M3 si vas a desarmar seguido (los tornillos directos en plástico se barren).', 'Pasa el cable del servo de la mano por el eje hueco <b>antes</b> de bajar el eje, y deja ~3 cm flojos para el giro de la muñeca.', 'Corta las orejas del MG995 extra (segueta fina y lija): las dos mitades de la palma lo aprietan.',],
+    'Electrónica y batería': ['Batería LiPo 2S <b>con protección (BMS)</b>; nunca bajar de 6.4 V.', 'Carga con el cargador USB-C 2S; la primera vez, vigílala. No la cargues tapada o al sol.', 'Fusible o polifusible de 3 A a la salida de la batería.', 'Programa la mano: abierta = 0°, cerrada = ' + S.servo_cierre + '° (con el diferencial).', 'Aísla la tarjeta con termocontráctil o una mano de barniz: el sudor llega por el socket.'],
     'Uso y cuidado': ['Los primeros días: 15–30 min y revisar la piel. Marcas rojas que no se quitan en 20 min = hay que ajustar.', 'Calceta de 1 capa normalmente; de 3 capas si el muñón está más delgado (en la mañana, con calor, después de ejercicio).', 'No mojarla: la electrónica no es a prueba de agua.', 'Limpiar el socket por dentro con alcohol diario.', 'Revisar cada semana que no haya grietas en las bisagras ni en la unión con el socket.'],
     'Clínico': ['Que un protesista revise el ajuste del socket y la línea de recorte antes del uso diario.', 'Manga de suspensión de silicón para que no se resbale (el regional no tenía sujeción).', 'Definir con el equipo dónde va el sensor EMG (el socket nuevo aún no tiene su ventana).'],
-    'Si algo falla': ['Un dedo no cierra: revisa que su bieleta esté enganchada y que su balancín gire libre.', 'Cierran índice y medio pero no anular y meñique: es normal que cierren después (el diferencial les da 15 %); si no cierran nunca, revisa la fricción de sus bisagras.', 'La muñeca no gira: revisa los 2 tornillos del eje y el acople del cuerno.', 'Se calienta el servo: está cargando demasiado o el brazo del servo quedó fuera de 0°.'] };
+    'Si algo falla': ['Un dedo no cierra: revisa que su bieleta esté enganchada y que su balancín gire libre.', 'Cierran índice y medio pero no anular y meñique: es normal que cierren después (el diferencial les da 15 %); si no cierran nunca, revisa la fricción de sus bisagras.', 'La muñeca no hace clic: revisa que el retén esté apretado y que las lengüetas no se hayan pegado al imprimir (sepáralas con un cúter).', 'Se calienta el servo: está cargando demasiado o el brazo del servo quedó fuera de 0°.'] };
   $('recos').innerHTML = Object.entries(RECOS).map(([t, l]) => `<div><h3>${t}</h3><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('');
   const PREG = [
     ['¿Qué quiere agarrar Adrián y cuánto pesa?', `Con el MG995 el agarre útil es de ≈${(S.agarre_kgf / 2).toFixed(1)} kgf. Si necesita más (cargar mochila, garrafón), hay que cambiar a un servo más fuerte o a un mecanismo de tornillo sin fin.`],
@@ -190,15 +190,15 @@
     ['¿Guante cosmético real o pintura?', 'Un guante de silicón tapa las uniones y protege del agua; tiene que ser de su talla (la mano mide como la suya).'],
     ['¿Peso máximo aceptable?', `El diseño pesa ≈${S.peso_g} g. Si se siente pesada, se puede aligerar el antebrazo y la palma por dentro.`],
     ['¿Su posición neutra es “pulgar arriba” como la calculé?', `La calculé con el eje del codo del escaneo: la neutra queda a ${Math.round(S.giro.neutra_desde_modelo)}° de la postura del modelo (puede variar ±15°). Si al ponérsela la mano descansa girada, se corrige solo en el programa.`],
-    ['¿Le bastan 80° hacia cada lado?', 'Es el rango normal de un antebrazo. Si quiere menos (más fuerza y menos batería), se limita en el programa; más de 80° no lo deja el tope.'],
+    ['¿Le bastan clics cada 20°?', 'Es suficiente para comer, beber y escribir. Si quiere pasos más finos (10°), se agregan muescas al eje.'],
     ['¿Quién hará el ajuste clínico?', 'El socket viene del escaneo de hoy; el muñón cambia de volumen. Conviene imprimir un socket de prueba y que lo revise un protesista.']];
   $('pregs').innerHTML = PREG.map(([q, a]) => `<li><b>${q}</b><span>${a}</span></li>`).join('');
   $('listaDesc').innerHTML = CAT.filter(c => c.stl).map(c => `<div class="fila-spec" style="align-items:center"><span><span class="maq" style="color:#0c0c0c">${c.id}</span> &nbsp;${c.nombre} · ${c.material}</span><a class="descarga" href="${c.stl}" download>STL ↓</a></div>`).join('');
 
   // ---------------------------------------------------------------- tabla de piezas + inspector
   const TOR = { C13: 'tornillo_collarin', C14: 'tornillo_union', C15: 'tornillo_eje', C16: 'tornillo_acople' };
-  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) || ['C01', 'C08', 'C09', 'C10', 'C11', 'C12'].includes(c.id),
-               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C02', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16'].includes(c.id), socket: c => ['P01', 'P06', 'P07', 'C07', 'C14', 'C17', 'C18', 'C19'].includes(c.id),
+  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) && c.id !== 'P02' || ['C01', 'C08', 'C09', 'C10', 'C11', 'C12'].includes(c.id),
+               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16'].includes(c.id), socket: c => ['P01', 'C07', 'C14', 'C18', 'C19'].includes(c.id),
                imprimir: c => c.tipo === 'imprimir', comprar: c => c.tipo === 'comprar', todas: () => true };
   let filtro = 'todas';
   function tabla() {
@@ -321,9 +321,9 @@
   // ---------------------------------------------------------------- socket + antebrazo
   const vs = Visor($('socketLienzo'), { fondo: 0x000000, dist: 620, el: 0.25, az: -0.4, rueda: true });
   const gs = new THREE.Group(); vs.escena.add(gs); const dirM = V3(mov.d).normalize(), plano = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
-  const sk = { P01: null, P02: null, P06: null, 'C07:electrodo': null }, tor = [], pa2 = geo('P02', M.piezas.P02).attributes.position.array;
+  const sk = { P01: null, P02: null, 'C07:electrodo': null }, tor = [], pa2 = geo('P02', M.piezas.P02).attributes.position.array;
   function centroEn(y) { let sx = 0, sz = 0, n = 0; for (let i = 0; i < pa2.length; i += 3) if (Math.abs(pa2[i + 1] - y) < 3) { sx += pa2[i]; sz += pa2[i + 2]; n++; } return new THREE.Vector3(sx / n, y, sz / n); }
-  ['P01', 'P02', 'P06', 'C07:electrodo'].forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.55, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(ms); sk[k] = ms; });
+  ['P01', 'P02', 'C07:electrodo'].forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.55, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(ms); sk[k] = ms; });
   Object.keys(M.piezas).filter(k => k.includes('tornillo_union')).forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), mat('#b9c1cc', { metalness: 0.7, roughness: 0.3 }));
     const c = geo(k, o).boundingSphere.center.clone(), rad = c.clone().sub(centroEn(c.y)); rad.y = 0; rad.normalize(); ms.userData.rad = rad; ms.userData.y = c.y; gs.add(ms); tor.push(ms); });
   const mun = new THREE.Mesh(geo('r:munon', M.refs.munon), new THREE.MeshStandardMaterial({ color: '#c97a64', roughness: 0.7, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(mun);
@@ -331,10 +331,10 @@
   let animS = false, tS = 0;
   function socketAplicar() {
     const s = $('sSep').value / 100, c = $('sCorte').value / 100;
-    sk.P01.position.copy(dirM).multiplyScalar(-90 * s); mun.position.copy(sk.P01.position); sk.P06.position.copy(sk.P01.position); sk['C07:electrodo'].position.copy(sk.P01.position);
+    sk.P01.position.copy(dirM).multiplyScalar(-90 * s); mun.position.copy(sk.P01.position); sk['C07:electrodo'].position.copy(sk.P01.position);
     tor.forEach(t => t.position.copy(t.userData.rad).multiplyScalar(35 * Math.min(1, s * 2.2)));
     plano.constant = c > 0 ? (cu.x + 60) - c * 60 : 1e6; plano.normal.set(-1, 0, 0);
-    [sk.P01, sk.P02, sk.P06, sk['C07:electrodo'], mun].forEach(m => { m.material.clippingPlanes = c > 0 ? [plano] : []; m.material.needsUpdate = true; });
+    [sk.P01, sk.P02, sk['C07:electrodo'], mun].forEach(m => { m.material.clippingPlanes = c > 0 ? [plano] : []; m.material.needsUpdate = true; });
   }
   ['sSep', 'sCorte'].forEach(id => $(id).oninput = () => { animS = false; socketAplicar(); });
   document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { if (b.dataset.s === 'munon') { mun.visible = !mun.visible; b.classList.toggle('on', mun.visible); } else { animS = !animS; tS = 0; b.classList.toggle('on', animS); } });
