@@ -88,7 +88,8 @@
       const g2 = new THREE.Group(); g2.position.copy(Jk[2].p).sub(Jk[1].p); g1.add(g2);
       G[n] = { B1: [g0, q], B2: [g1, Jk[1].p], B3: [g2, Jk[2].p], g0, g1, g2, q };
     });
-    const padre = (g, d) => g === 'brazo' ? [prot, null] : g === 'muneca' ? [muneca, wc] : g === 'palma' ? [mano, null] : g === 'pulgar' ? G.pulgar.pulgar : G[d] ? G[d][g] : [prot, null];
+    const dif = new THREE.Group(); mano.add(dif);                         // carro + balancines: se deslizan al cerrar
+    const padre = (g, d) => g === 'dif' ? [dif, null] : g === 'brazo' ? [prot, null] : g === 'muneca' ? [muneca, wc] : g === 'palma' ? [mano, null] : g === 'pulgar' ? G.pulgar.pulgar : G[d] ? G[d][g] : [prot, null];
     const todas = [], porId = {}, bielasImp = [], guante = [];
     function poner(clave, o, material, lista) {
       const [pa, org] = padre(o.grupo, o.dedo), ms = new THREE.Mesh(geo(clave, o), material);
@@ -97,17 +98,16 @@
     }
     Object.entries(M.piezas).forEach(([k, o]) => {
       const ms = poner(k, o, mat(o.color, metal(o.color) ? { metalness: 0.7, roughness: 0.3 } : {}));
-      porId[k] = ms; if (/^P(2[5-9]|3[0-4])$/.test(k)) bielasImp.push(ms);
+      porId[k] = ms; if (/^P(29|3\d|4[01])$/.test(k)) bielasImp.push(ms);
     });
     Object.entries(M.guante).forEach(([k, o]) => { const ms = poner('g:' + k, o, mat('#a9744f', { roughness: 0.8 }), guante); ms.visible = false; });
     // bielas en movimiento (barras entre sus dos pernos)
-    const mB = M.mov.mecB, mBar = mat('#c9a35a', { metalness: 0.3, roughness: 0.4 }), barras = [], gBar = new THREE.CylinderGeometry(1.3, 1.3, 1, 10);
+    const mB = M.mov.mecB, DF = M.mov.dif, mBar = mat('#c9a35a', { metalness: 0.3, roughness: 0.4 }), barras = [], gBar = new THREE.CylinderGeometry(1.3, 1.3, 1, 10);
     const marca = (pa, p, org) => { const o = new THREE.Object3D(); o.position.copy(V3(p)); if (org) o.position.sub(org); pa.add(o); return o; };
     const pares = [];
     ['indice', 'medio', 'anular', 'menique'].forEach(n => { const d = mB.dedos[n], g = G[n]; pares.push([marca(mano, d.G), marca(g.g1, d.C, J[mov.orden.indexOf(n)][1].p)], [marca(g.g0, d.E, g.q), marca(g.g2, d.F, J[mov.orden.indexOf(n)][2].p)]); });
-    pares.push([marca(G.indice.g0, mB.pulgar.A, G.indice.q), marca(G.pulgar.g0, mB.pulgar.B, J[mov.orden.indexOf('pulgar')][0].p)]);
-    const S = V3(mB.servo.eje), cuerno = new THREE.Group(); cuerno.position.copy(S); mano.add(cuerno);
-    pares.push([marca(cuerno, mB.servo.H, S), marca(G.menique.g0, mB.servo.K, G.menique.q)]);
+    ['indice', 'medio', 'anular', 'menique'].forEach(n => pares.push([marca(G[n].g0, DF.L0[n], G[n].q), marca(dif, DF.B0[n])]));     // bieletas: palanca -> balancín
+    const Hm = new THREE.Object3D(); mano.add(Hm); pares.push([Hm, marca(dif, DF.Q0)]);                                          // biela del cuerno
     const gB = new THREE.Group(); mano.add(gB);
     pares.forEach(() => { const b = new THREE.Mesh(gBar, mBar); gB.add(b); barras.push(b); });
     const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _y = new THREE.Vector3(0, 1, 0);
@@ -134,13 +134,13 @@
       a.needsUpdate = true; R.ms.geometry.computeVertexNormals();
     }
     const est = { cierre: 0, muneca: 0, codo: 0, expl: 0, guante: false, transp: false };
-    const transparentes = ['P01', 'P02', 'P03', 'P08', 'P09', 'P22'].map(k => porId[k]).filter(Boolean);
+    const transparentes = ['P01', 'P02', 'P03', 'P09', 'P10', 'P24'].map(k => porId[k]).filter(Boolean);
     function aplicar() {
       const r = Math.PI / 180, e = est.expl > 0.001 ? est.expl : 0, c = e ? 0 : est.cierre, t1 = c * mB.nudillo_max;
       ['indice', 'medio', 'anular', 'menique'].forEach((n, k) => { const g = G[n], d = mB.dedos[n], Jk = J[k];
         g.g0.quaternion.setFromAxisAngle(ejeA, t1 * r); g.g1.quaternion.setFromAxisAngle(Jk[1].e, interp(t1, d.nudillo, d.media) * r); g.g2.quaternion.setFromAxisAngle(Jk[2].e, interp(t1, d.nudillo, d.punta) * r); });
-      G.pulgar.g0.quaternion.setFromAxisAngle(V3(mov.opcionB.eje_oposicion).normalize(), c * mB.pulgar_max * r);
-      cuerno.quaternion.setFromAxisAngle(V3(mB.servo.dir).normalize(), interp(t1, mB.servo.servo_vs_nudillo.nudillo, mB.servo.servo_vs_nudillo.servo) * r);
+      dif.position.copy(V3(DF.ea)).multiplyScalar(-interp(t1, DF.nudillo, DF.carro));                          // el carro va hacia la muñeca
+      Hm.position.set(...[0, 1, 2].map(i => interp(t1, DF.nudillo, DF.H.map(h => h[i]))));                         // punta del cuerno
       muneca.quaternion.setFromAxisAngle(ejeG, est.muneca * r);
       codo.quaternion.setFromAxisAngle(ejeCodo, mov.sg * est.codo * r);
       todas.forEach(m => m.position.copy(m.userData.base).addScaledVector(m.userData.dir, e));
@@ -163,8 +163,8 @@
   function rail(el, filas) { $(el).innerHTML = filas.map(([n, v, u]) => `<div class="fila-spec"><span>${n}</span><b>${v}${u ? `<small> ${u}</small>` : ''}</b></div>`).join(''); }
   rail('rail', [['Codo → muñeca', S.codo_muneca_mm, 'mm'], ['Punta del muñón → dedo medio', S.punta_munon_dedo_mm, 'mm'], ['Peso estimado', '≈' + S.peso_g, 'g'],
                 ['Piezas para imprimir', S.piezas_impresas, ''], ['Pieza más grande', S.max_pieza_mm, 'mm'], ['Servo para cerrar la mano', S.servo_cierre + '°', '']]);
-  rail('railCap', [['Agarre útil (los 4 dedos)', '≈' + (S.agarre_kgf / 2).toFixed(1), 'kgf'], ['Agarre máximo (servo al límite)', S.agarre_kgf, 'kgf'],
-                   ['Pinza pulgar–índice', '≈' + Math.round(S.pinza_N / 2), 'N'], ['Colgar del gancho (uso diario)', '≤' + (S.gancho_kg / 2).toFixed(1), 'kg'],
+  rail('railCap', [['Agarre máximo (servo al límite)', S.agarre_kgf, 'kgf'], ['Índice y medio, cada uno', '≈' + S.fuerza_dedo_N[0], 'N'],
+                   ['Anular y meñique, cada uno', '≈' + S.fuerza_dedo_N[2], 'N'], ['Reparto del diferencial', Math.round(S.reparto.indice_medio * 100) + '/' + Math.round(S.reparto.anular_menique * 100), ''],
                    ['Giro de muñeca (desde la neutra)', '±' + S.giro.pronacion + '°', ''], ['Batería', S.autonomia_h, 'h (estimado)']]);
   $('notasCap').innerHTML = [
     '<b>Agarre:</b> alcanza para un vaso, una botella de medio litro, el celular o una bolsa ligera.',
@@ -172,20 +172,21 @@
     '<b>Muñeca:</b> gira 80° hacia cada lado desde la posición neutra (pulgar arriba), como un antebrazo real. Un tope físico no la deja pasar. Con algo pesado en la mano, ayúdale con la otra mano.',
     '<b>No es para</b> apoyarse, empujar el cuerpo o golpes: el plástico y el socket no están hechos para eso.'].map(x => `<li>${x}</li>`).join('');
   const RECOS = {
-    'Impresión': ['Imprime primero <b>un dedo de prueba</b> (índice) y ármalo: si las bisagras quedan duras o flojas, ajusta el juego antes de imprimir todo.', '<b>PETG</b> para socket, antebrazo, collarín, palma, pulgar, eje y bielas (aguanta mejor el calor y los golpes que el PLA). PLA solo para soporte y bandeja.', '<b>TPU 95A</b> para las yemas.', 'Paredes de 4 líneas, relleno 25–35 %; bielas y eje al <b>100 %</b>.', 'Socket de pie con soportes solo dentro de las alas; lija el borde para que no corte.', 'Agranda los barrenos con broca: Ø2.1 (pernos), Ø4.2 (varilla), Ø3.1 (pulgar), Ø2.5 (guías de tornillo).'],
-    'Armado': ['Pernos de acero (varilla de 2 mm cortada) en lugar de tornillos en las bisagras: no se aflojan.', 'Una gota de grasa de litio o silicón en cada perno.', 'Centra el servo de la mano en 0° (abierta) <b>antes</b> de poner su brazo.', 'Insertos de latón M2.5/M3 si vas a desarmar seguido (los tornillos directos en plástico se barren).', 'Pasa el cable del servo de la mano por el eje hueco <b>antes</b> de bajar el eje, y deja ~3 cm flojos para el giro de la muñeca.', 'Recorta el cuerno doble del MG90S a Ø20 mm: así no toca el tope.', 'Mide tu MG90S antes de imprimir el collarín: del fondo a las orejas 15.9 mm y de las orejas a la punta del eje 10 mm. Si cambia, hay que mover la placa.'],
-    'Electrónica y batería': ['Batería LiPo 2S <b>con protección (BMS)</b>; nunca bajar de 6.4 V.', 'Carga con el cargador USB-C 2S; la primera vez, vigílala. No la cargues tapada o al sol.', 'Fusible o polifusible de 3 A a la salida de la batería.', 'Programa la mano: abierta = 0°, cerrada = 82° (ya no 95°). La zona de 0–15° casi no mueve los dedos: ayuda a que se quede abierta sin gastar batería.', 'Programa la muñeca: 90° = neutra (pulgar arriba); límites 13° y 167° (±77°) para no empujar contra el tope.', 'Aísla la tarjeta con termocontráctil o una mano de barniz: el sudor llega por el socket.'],
+    'Impresión': ['Todo en <b>PETG</b>: blanco para antebrazo, palma y dedos; negro (grafito) para el socket, la muñeca y el mecanismo.', 'Imprime primero <b>el índice y sus 2 bielitas</b> y ármalo: si las bisagras quedan duras o flojas, ajusta antes de imprimir todo.', 'Paredes de 4 líneas y relleno 25–35 %; <b>100 %</b> en el eje de los nudillos, el eje de la muñeca, el acople, el carro, los balancines y todas las bielas.', 'El eje de los nudillos se imprime <b>acostado sobre su cara plana</b>.', 'Socket de pie, soportes solo dentro de las alas; lija el borde.', 'Repasa barrenos con broca: Ø2.3 (M2 libre), Ø1.7 (M2 que se rosca), Ø5.4 (eje de los nudillos), Ø3.3 (M3 libre).'],
+    'Mecanismo': ['El <b>diferencial</b> debe moverse solo con el dedo: si un balancín se traba, repasa su barreno con broca Ø2.3.', 'Una gota de grasa de litio en el buje de la muñeca, el canal del carro y cada tornillo-perno.', 'Las bieletas se <b>enganchan</b> (ojo en C) en la palanca de cada dedo: si quedan flojas, una gota de pegamento de contacto en el perno, no en el ojo.', 'Pon el seguro del pulgar en <b>20°</b> para la botella y en <b>35°</b> para la pinza.'],
+    'Armado': ['Centra el servo de la mano en 0° (abierta) <b>antes</b> de poner su brazo.', 'Insertos de latón M2.5/M3 si vas a desarmar seguido (los tornillos directos en plástico se barren).', 'Pasa el cable del servo de la mano por el eje hueco <b>antes</b> de bajar el eje, y deja ~3 cm flojos para el giro de la muñeca.', 'Recorta el cuerno doble del MG90S a Ø20 mm: así no toca el tope.', 'Corta las orejas del MG995 extra (segueta fina y lija): las dos mitades de la palma lo aprietan.', 'Mide tu MG90S antes de imprimir el collarín: del fondo a las orejas 15.9 mm y de las orejas a la punta del eje 10 mm. Si cambia, hay que mover la placa.'],
+    'Electrónica y batería': ['Batería LiPo 2S <b>con protección (BMS)</b>; nunca bajar de 6.4 V.', 'Carga con el cargador USB-C 2S; la primera vez, vigílala. No la cargues tapada o al sol.', 'Fusible o polifusible de 3 A a la salida de la batería.', 'Programa la mano: abierta = 0°, cerrada = ' + S.servo_cierre + '° (con el diferencial).', 'Programa la muñeca: 90° = neutra (pulgar arriba); límites 13° y 167° (±77°) para no empujar contra el tope.', 'Aísla la tarjeta con termocontráctil o una mano de barniz: el sudor llega por el socket.'],
     'Uso y cuidado': ['Los primeros días: 15–30 min y revisar la piel. Marcas rojas que no se quitan en 20 min = hay que ajustar.', 'Calceta de 1 capa normalmente; de 3 capas si el muñón está más delgado (en la mañana, con calor, después de ejercicio).', 'No mojarla: la electrónica no es a prueba de agua.', 'Limpiar el socket por dentro con alcohol diario.', 'Revisar cada semana que no haya grietas en las bisagras ni en la unión con el socket.'],
     'Clínico': ['Que un protesista revise el ajuste del socket y la línea de recorte antes del uso diario.', 'Manga de suspensión de silicón para que no se resbale (el regional no tenía sujeción).', 'Definir con el equipo dónde va el sensor EMG (el socket nuevo aún no tiene su ventana).'],
-    'Si algo falla': ['El dedo no cierra completo: revisa que la biela principal no esté trabada y que el servo llegue a 82°.', 'La muñeca no gira: revisa los 2 tornillos del eje y el acople del cuerno.', 'Se calienta el servo: está cargando demasiado o el brazo del servo quedó fuera de 0°.'] };
+    'Si algo falla': ['Un dedo no cierra: revisa que su bieleta esté enganchada y que su balancín gire libre.', 'Cierran índice y medio pero no anular y meñique: es normal que cierren después (el diferencial les da 15 %); si no cierran nunca, revisa la fricción de sus bisagras.', 'La muñeca no gira: revisa los 2 tornillos del eje y el acople del cuerno.', 'Se calienta el servo: está cargando demasiado o el brazo del servo quedó fuera de 0°.'] };
   $('recos').innerHTML = Object.entries(RECOS).map(([t, l]) => `<div><h3>${t}</h3><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('');
   const PREG = [
     ['¿Qué quiere agarrar Adrián y cuánto pesa?', `Con el MG995 el agarre útil es de ≈${(S.agarre_kgf / 2).toFixed(1)} kgf. Si necesita más (cargar mochila, garrafón), hay que cambiar a un servo más fuerte o a un mecanismo de tornillo sin fin.`],
     ['¿Debe sostener sin gastar batería?', 'Hoy el servo tiene que hacer fuerza todo el tiempo que la mano agarra. Un mecanismo autobloqueante sostendría gratis, pero es más grande y más lento.'],
-    ['¿Qué sensor EMG usarán y en qué músculo?', 'Hay que abrir una ventana en el socket justo sobre ese músculo y pasar su cable por dentro. Necesito el modelo del sensor y dónde lo ponen.'],
+    ['¿El electrodo queda bien en la ventana del socket?', 'La ventana está en la cara antero-medial, unos 6 cm bajo la línea del codo (músculos que cierran la mano). Midan el electrodo con vernier: si no es de 30 × 37 mm, se ajusta la ventana.'],
     ['¿Cómo se va a sujetar?', 'Recomiendo una manga de silicón. Otras opciones: correa sobre el codo o socket de succión. Cambia el borde del socket.'],
     ['¿Su impresora mide 22 cm en las tres direcciones?', `La pieza más grande mide ${S.max_pieza_mm} mm, así que cabe. Si alguna dirección es menor, dime cuál.`],
-    ['¿Tienen PETG y TPU?', 'Con PLA funciona para probar, pero se deforma con el calor (dentro de un coche, al sol).'],
+    ['¿Alcanza el filamento?', `Se necesitan ≈${S.filamento_blanco_g} g de PETG blanco y ≈${S.filamento_negro_g} g de negro (más 20 % por soportes y pruebas).`],
     ['¿Guante cosmético real o pintura?', 'Un guante de silicón tapa las uniones y protege del agua; tiene que ser de su talla (la mano mide como la suya).'],
     ['¿Peso máximo aceptable?', `El diseño pesa ≈${S.peso_g} g. Si se siente pesada, se puede aligerar el antebrazo y la palma por dentro.`],
     ['¿Su posición neutra es “pulgar arriba” como la calculé?', `La calculé con el eje del codo del escaneo: la neutra queda a ${Math.round(S.giro.neutra_desde_modelo)}° de la postura del modelo (puede variar ±15°). Si al ponérsela la mano descansa girada, se corrige solo en el programa.`],
@@ -195,9 +196,9 @@
   $('listaDesc').innerHTML = CAT.filter(c => c.stl).map(c => `<div class="fila-spec" style="align-items:center"><span><span class="maq" style="color:#0c0c0c">${c.id}</span> &nbsp;${c.nombre} · ${c.material}</span><a class="descarga" href="${c.stl}" download>STL ↓</a></div>`).join('');
 
   // ---------------------------------------------------------------- tabla de piezas + inspector
-  const TOR = { C14: 'tornillo_collarin', C15: 'tornillo_union', C16: 'tornillo_eje', C17: 'tornillo_acople', C20: 'tornillo_tapa' };
-  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar'].includes(c.grupo) || ['C01', 'C08', 'C09', 'C10', 'C11', 'C12', 'C13', 'C16'].includes(c.id),
-               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P06', 'P07', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C14', 'C17', 'C20', 'C21'].includes(c.id), socket: c => ['P01', 'C15', 'C18', 'C19'].includes(c.id),
+  const TOR = { C13: 'tornillo_collarin', C14: 'tornillo_union', C15: 'tornillo_eje', C16: 'tornillo_acople' };
+  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) || ['C01', 'C08', 'C09', 'C10', 'C11', 'C12'].includes(c.id),
+               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C02', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16'].includes(c.id), socket: c => ['P01', 'P06', 'P07', 'C07', 'C14', 'C17', 'C18', 'C19'].includes(c.id),
                imprimir: c => c.tipo === 'imprimir', comprar: c => c.tipo === 'comprar', todas: () => true };
   let filtro = 'todas';
   function tabla() {
@@ -320,9 +321,9 @@
   // ---------------------------------------------------------------- socket + antebrazo
   const vs = Visor($('socketLienzo'), { fondo: 0x000000, dist: 620, el: 0.25, az: -0.4, rueda: true });
   const gs = new THREE.Group(); vs.escena.add(gs); const dirM = V3(mov.d).normalize(), plano = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
-  const sk = { P01: null, P02: null }, tor = [], pa2 = geo('P02', M.piezas.P02).attributes.position.array;
+  const sk = { P01: null, P02: null, P06: null, 'C07:electrodo': null }, tor = [], pa2 = geo('P02', M.piezas.P02).attributes.position.array;
   function centroEn(y) { let sx = 0, sz = 0, n = 0; for (let i = 0; i < pa2.length; i += 3) if (Math.abs(pa2[i + 1] - y) < 3) { sx += pa2[i]; sz += pa2[i + 2]; n++; } return new THREE.Vector3(sx / n, y, sz / n); }
-  ['P01', 'P02'].forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.55, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(ms); sk[k] = ms; });
+  ['P01', 'P02', 'P06', 'C07:electrodo'].forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), new THREE.MeshStandardMaterial({ color: o.color, roughness: 0.55, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(ms); sk[k] = ms; });
   Object.keys(M.piezas).filter(k => k.includes('tornillo_union')).forEach(k => { const o = M.piezas[k], ms = new THREE.Mesh(geo(k, o), mat('#b9c1cc', { metalness: 0.7, roughness: 0.3 }));
     const c = geo(k, o).boundingSphere.center.clone(), rad = c.clone().sub(centroEn(c.y)); rad.y = 0; rad.normalize(); ms.userData.rad = rad; ms.userData.y = c.y; gs.add(ms); tor.push(ms); });
   const mun = new THREE.Mesh(geo('r:munon', M.refs.munon), new THREE.MeshStandardMaterial({ color: '#c97a64', roughness: 0.7, side: THREE.DoubleSide, clippingPlanes: [] })); gs.add(mun);
@@ -330,15 +331,53 @@
   let animS = false, tS = 0;
   function socketAplicar() {
     const s = $('sSep').value / 100, c = $('sCorte').value / 100;
-    sk.P01.position.copy(dirM).multiplyScalar(-90 * s); mun.position.copy(sk.P01.position);
+    sk.P01.position.copy(dirM).multiplyScalar(-90 * s); mun.position.copy(sk.P01.position); sk.P06.position.copy(sk.P01.position); sk['C07:electrodo'].position.copy(sk.P01.position);
     tor.forEach(t => t.position.copy(t.userData.rad).multiplyScalar(35 * Math.min(1, s * 2.2)));
     plano.constant = c > 0 ? (cu.x + 60) - c * 60 : 1e6; plano.normal.set(-1, 0, 0);
-    [sk.P01, sk.P02, mun].forEach(m => { m.material.clippingPlanes = c > 0 ? [plano] : []; m.material.needsUpdate = true; });
+    [sk.P01, sk.P02, sk.P06, sk['C07:electrodo'], mun].forEach(m => { m.material.clippingPlanes = c > 0 ? [plano] : []; m.material.needsUpdate = true; });
   }
   ['sSep', 'sCorte'].forEach(id => $(id).oninput = () => { animS = false; socketAplicar(); });
   document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { if (b.dataset.s === 'munon') { mun.visible = !mun.visible; b.classList.toggle('on', mun.visible); } else { animS = !animS; tS = 0; b.classList.toggle('on', animS); } });
   vs.cada = dt => { if (animS) { tS += dt; $('sSep').value = Math.round(50 * (1 - Math.cos(tS * 1.1))); socketAplicar(); } };
   socketAplicar();
+
+  // ---------------------------------------------------------------- diferencial en 2D (vista desde el dorso)
+  (function () {
+    const D2 = M.mov.dif2d, sv = $('fSv'), NOMS = ['indice', 'medio', 'anular', 'menique']; if (!sv) return;
+    const X = p => 210 - p[1] * 3.0, Y = p => 232 - p[0] * 3.0;                    // t a lo ancho (índice a la izquierda), s hacia arriba
+    let caso = 'libre', k = 0, an = false, t = 0, pr = 0;
+    const ln = (a, b, w, c, extra) => `<line x1="${X(a)}" y1="${Y(a)}" x2="${X(b)}" y2="${Y(b)}" stroke="${c}" stroke-width="${w * 0.75}" stroke-linecap="round" ${extra || ''}/>`;
+    const dot = (p, r, c, f) => `<circle cx="${X(p)}" cy="${Y(p)}" r="${r}" fill="${f || '#fff'}" stroke="${c}" stroke-width="2"/>`;
+    function dib() {
+      const pasos = D2.casos[caso], f = k * (pasos.length - 1), i = Math.min(pasos.length - 2, Math.floor(f)), u = f - i, A = pasos[i], B = pasos[i + 1];
+      const mix = (a, b) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], P = key => NOMS.reduce((o, n) => (o[n] = mix(A[key][n], B[key][n]), o), {});
+      const L = P('L'), Bj = P('B'), ang = NOMS.map((n, j) => A.ang[j] + (B.ang[j] - A.ang[j]) * u), cr = A.carro + (B.carro - A.carro) * u, fin = pasos[pasos.length - 1].ang;
+      let g = '';
+      NOMS.forEach((n, j) => {
+        const q = D2.nudillos[n], tp = D2.puntas[n], c = Math.cos(ang[j] * Math.PI / 180), e = [q[0] + (tp[0] - q[0]) * c, q[1] + (tp[1] - q[1]) * c];
+        const toca = caso !== 'libre' && fin[j] < 46 && k > 0.97;
+        g += ln(q, e, 15, toca ? '#0c0c0c' : '#cecece') + (toca ? `<text x="${X(e)}" y="${Y(e) - 14}" text-anchor="middle" class="ft">toca</text>` : '');
+      });
+      NOMS.forEach(n => { g += ln(L[n], Bj[n], 2.5, '#6d6d6d'); });
+      const p1 = mix(A.P1, B.P1), p2 = mix(A.P2, B.P2), pm = mix(A.PM, B.PM);
+      g += ln(Bj.indice, p1, 7, '#0c0c0c') + ln(p1, Bj.medio, 7, '#0c0c0c') + ln(Bj.anular, p2, 7, '#0c0c0c') + ln(p2, Bj.menique, 7, '#0c0c0c');
+      g += ln(p1, pm, 9, '#0c0c0c') + ln(pm, p2, 9, '#0c0c0c');
+      g += `<rect x="${X(pm) - 22}" y="${Y(pm) - 6}" width="44" height="40" fill="none" stroke="#0c0c0c" stroke-width="2"/>`;
+      NOMS.forEach(n => { g += dot(Bj[n], 4.5, '#0c0c0c') + dot(L[n], 4, '#6d6d6d'); });
+      g += dot(p1, 5, '#0c0c0c') + dot(p2, 5, '#0c0c0c') + dot(pm, 5, '#0c0c0c', '#0c0c0c');
+      $('fSvG').innerHTML = g;
+      $('fLect').textContent = `carro ${cr.toFixed(1)} mm · nudillos (índice / medio / anular / meñique) ` + ang.map(a => a.toFixed(0) + '°').join(' / ');
+    }
+    document.querySelectorAll('[data-caso]').forEach(b => b.onclick = () => {
+      caso = b.dataset.caso; document.querySelectorAll('[data-caso]').forEach(x => x.classList.toggle('on', x === b));
+      k = 0; t = 0; $('fC').value = 0; an = true; $('fAnim').textContent = '❚❚ Pausa'; pr = performance.now(); requestAnimationFrame(paso);
+    });
+    $('fC').oninput = e => { an = false; $('fAnim').textContent = '▶ Animar'; k = e.target.value / 100; dib(); };
+    $('fAnim').onclick = () => { an = !an; $('fAnim').textContent = an ? '❚❚ Pausa' : '▶ Animar'; pr = performance.now(); if (an) requestAnimationFrame(paso); };
+    function paso(now) { if (!an) return; t += (now - pr) / 1000; pr = now; k = 0.5 - 0.5 * Math.cos(t * 1.3); $('fC').value = Math.round(k * 100); dib(); requestAnimationFrame(paso); }
+    dib();
+  })();
+
 
   // ---------------------------------------------------------------- dedo en 2D (mecanismo)
   (function () {

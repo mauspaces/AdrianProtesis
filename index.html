@@ -163,7 +163,7 @@
   <a class="marca" href="#inicio"><i></i>HAND-E · Adrián</a>
   <button id="menuBtn" aria-label="Abrir menú">Menú</button>
   <nav id="nav">
-    <a href="#explorar">Prótesis</a><a href="#mecanismo">Mecanismo</a><a href="#socket">Socket</a><a href="#piezas">Piezas</a>
+    <a href="#explorar">Prótesis</a><a href="#mecanismo">Mecanismo</a><a href="#diferencial">Diferencial</a><a href="#socket">Socket</a><a href="#piezas">Piezas</a>
     <a href="#armado">Armado</a><a href="#datos">Capacidad</a><a href="#recomendaciones">Recomendaciones</a><a href="#descargas">Descargas</a>
   </nav>
 </header>
@@ -215,7 +215,7 @@
   <div class="ancho dos">
     <div>
       <div class="eti">01 · Cómo se mueve</div>
-      <h2 class="media">Un motor. Cinco dedos. Cero hilos.</h2>
+      <h2 class="media">Un motor. Agarre adaptativo. Cero hilos.</h2>
       <svg id="dSv" viewBox="0 0 680 300" width="100%" class="marco" role="img" aria-label="Dedo de lado con sus bielas">
         <rect x="40" y="72" width="214" height="100" rx="18" fill="#efefef" stroke="#0c0c0c" stroke-width="1"/>
         <rect x="62" y="104" width="76" height="46" fill="#0c0c0c"/><text x="100" y="131" text-anchor="middle" fill="#fff" font-family="Space Grotesk" font-size="12">SERVO</text>
@@ -234,15 +234,40 @@
       <p class="aviso" style="margin-top:12px">Esquema de un dedo visto de lado (simplificado). En la mano real, al cerrar: nudillo 47°, articulación media ~60° y punta ~45°.</p>
     </div>
     <ol class="pasos-num">
-      <li><b>El servo de la mano</b> va dentro de la palma. Su brazo empuja la <b>biela principal</b>.</li>
-      <li>La biela principal jala una palanca en la base del meñique: las <b>cuatro primeras falanges</b> giran juntas en la varilla de acero de los nudillos.</li>
-      <li>Dentro de cada dedo, una biela une la <b>palma con la segunda falange</b>: al girar la primera, la segunda se dobla sola.</li>
-      <li>Otra biela une la <b>primera falange con la tercera</b>: la punta se dobla al final, como un dedo real.</li>
-      <li>Una biela con rótulas une el <b>índice con el pulgar</b>: al cerrar, el pulgar se acerca y hacen la <b>pinza</b>.</li>
-      <li>El <b>servo de la muñeca</b> (MG90S) gira la mano como un antebrazo real: 80° hacia cada lado desde la posición neutra (pulgar arriba). Un <b>tope</b> físico no lo deja pasar de ahí y el <b>balero</b> carga el peso; el servo solo gira.</li>
+      <li><b>El servo de la mano</b> (MG995, dentro de la palma) jala un <b>carro</b> que corre en un canal recto.</li>
+      <li>El carro jala un <b>diferencial de balancines</b>: un balancín principal y dos de dedo (índice-medio y anular-meñique).</li>
+      <li>Cada balancín jala, con una <b>bieleta</b>, la <b>palanca</b> que tiene cada dedo bajo su nudillo, como un tendón flexor. Los 4 dedos giran sueltos en su eje.</li>
+      <li>Si un dedo <b>toca el objeto</b>, se detiene; su balancín gira y los demás siguen cerrando hasta tocar. La mano se <b>amolda</b> a la forma del objeto.</li>
+      <li>Dentro de cada dedo, dos bielitas doblan solas la falange media y la punta, como un dedo real. El <b>pulgar</b> se pone a mano en 3 posiciones (abierto, botella, pinza).</li>
+      <li>El <b>servo de la muñeca</b> (MG90S) gira la mano 80° hacia cada lado desde la neutra, con un <b>tope</b> físico; el buje carga el peso y el servo solo gira.</li>
     </ol>
   </div>
 </section>
+
+<section class="claro-cap" id="diferencial" style="border-top:1px solid #cecece">
+  <div class="ancho">
+    <div class="eti">01b · El diferencial, visto desde el dorso</div>
+    <h2 class="media">Cada dedo se detiene al tocar</h2>
+    <p class="grande">Gris claro: dedos (se acortan al doblarse). Negro: balancines y carro. Elige un caso: cuando un dedo toca el objeto, su balancín gira y los demás siguen cerrando.</p>
+    <div class="chips" style="margin:18px 0">
+      <button class="chip on" data-caso="libre">Sin objeto</button><button class="chip" data-caso="indice a 0">El índice toca primero</button>
+      <button class="chip" data-caso="medio a 0">El medio toca primero</button><button class="chip" data-caso="botella">Botella</button>
+      <button class="chip" data-caso="vaso">Vaso chico</button><button class="chip" data-caso="meñique solo">Solo el meñique libre</button>
+    </div>
+    <svg id="fSv" viewBox="0 0 420 370" style="width:100%;max-width:620px;display:block;border:1px solid #cecece;background:#fff" role="img" aria-label="Diferencial de balancines visto desde el dorso">
+      <style>.ft{font:500 12px 'Space Grotesk',sans-serif;letter-spacing:.3px;text-transform:uppercase;fill:#0c0c0c}</style>
+      <text x="16" y="24" class="ft">índice</text><text x="404" y="24" class="ft" text-anchor="end">meñique</text><text x="16" y="360" class="ft">hacia la muñeca ↓</text>
+      <g id="fSvG"></g>
+    </svg>
+    <div style="display:flex;gap:14px;align-items:center;margin-top:14px;max-width:760px">
+      <span class="gris" style="font-size:13px">Abierta</span><input id="fC" type="range" min="0" max="100" value="0" style="flex:1;accent-color:#0c0c0c"><span class="gris" style="font-size:13px">Cerrada</span>
+      <button class="sub-btn" id="fAnim">▶ Animar</button>
+    </div>
+    <p class="gris" id="fLect" style="font-size:13px;margin-top:8px"></p>
+    <p class="gris" style="font-size:14px;max-width:760px">El balancín principal reparte 85 % de la fuerza a índice y medio y 15 % a anular y meñique: así cupo el servo en la palma de Adrián sin hacerla más gruesa. Sin objeto, primero cierran índice y medio y luego anular y meñique.</p>
+  </div>
+</section>
+
 
 <section class="oscuro-cap" id="socket">
   <div class="ancho">
