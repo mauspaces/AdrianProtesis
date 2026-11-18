@@ -288,7 +288,7 @@
 
   // ---------------------------------------------------------------- hero (gira sola) y explorador
   const vh = Visor($('heroLienzo'), { fondo: 0xffffff, auto: 0.25, dist: 760, el: 0.32, az: -2.5, quieto: false });
-  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
+  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; ph.est.pulgar = 35; ph.aplicar(); { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
   const ve = Visor($('explorarLienzo'), { fondo: 0x000000, dist: 820, el: 0.42, az: -2.3, rueda: true });
   const pe = Protesis(ve.escena); { const s = pe.caja(); ve.centro.copy(s.center); ve.dist = s.radius * 2.9; }
   const enfocar = (az, el, k, soloMano) => { const s = pe.caja(soloMano, !soloMano); ve.ir(az ?? ve.az, el ?? ve.el, s.radius * (k || 2.9), s.center); };
@@ -300,7 +300,7 @@
   function marcar() { document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.classList.toggle('on', { anim: animC, giro: animG, explA: animE, guante: E.guante, transp: E.transp, munon: pe.refs.munon.ms.visible, ref: pe.refs.brazo_derecho.ms.visible }[b.dataset.t])); }
   document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.onclick = () => {
     const t = b.dataset.t;
-    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; if (animC && pulObj === 0) { pulObj = 20; marcarP(); } }
+    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; if (animC && pulObj === 0) { pulObj = 35; marcarP(); } }
     if (t === 'giro') { animG = !animG; animE = false; tG = 0; $('cExpl').value = 0; if (animG) enfocar(Math.PI / 2 + 0.25, 0.25, 2.2, true); }
     if (t === 'explA') { animE = !animE; animC = false; tE = 0; E.expl = 1; pe.aplicar(); enfocar(-2.3, 0.5, 2.4, true); }
     if (t === 'guante') E.guante = !E.guante; if (t === 'transp') E.transp = !E.transp;
@@ -308,7 +308,7 @@
     if (t === 'ref') { const r = pe.refs.brazo_derecho.ms; r.visible = !r.visible; marcar(); leer(); enfocar(Math.PI, 1.5, 2.4); }
     marcar(); leer();
   });
-  let pulObj = 0;
+  let pulObj = 35; E.pulgar = 35; pe.aplicar();                                                      // se arma en pinza
   function marcarP() { document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.classList.toggle('on', +b.dataset.p === pulObj)); }
   document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.onclick = () => { pulObj = +b.dataset.p; $('cExpl').value = 0; animE = false; marcar(); marcarP(); leer(); });
   const VISTA = { dorso: [Math.PI, 1.5, 2.6], palma: [Math.PI, -1.5, 2.6], lado: [0, 0.05, 2.6], mano: [0.35, 0.35, 3.2, true] };
