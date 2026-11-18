@@ -79,7 +79,7 @@
     const muneca = new THREE.Group(); muneca.position.copy(wc); prot.add(muneca);
     const mano = new THREE.Group(); mano.position.copy(wc).multiplyScalar(-1); muneca.add(mano);
     const J = mov.orden.map(n => mov.dedos[n].map(j => ({ p: V3(j.p), e: V3(j.eje).normalize() })));
-    const G = {};
+    const G = {}, eoP = mov.pulgar ? V3(mov.pulgar.eje).normalize() : null;
     mov.orden.forEach((n, k) => {
       const Jk = J[k];
       if (n === 'pulgar') { const g0 = new THREE.Group(); g0.position.copy(Jk[0].p); mano.add(g0); G.pulgar = { pulgar: [g0, Jk[0].p], g0 }; return; }
@@ -133,16 +133,17 @@
         p[3 * i] = v.x + pc.x; p[3 * i + 1] = v.y + pc.y; p[3 * i + 2] = v.z + pc.z; }
       a.needsUpdate = true; R.ms.geometry.computeVertexNormals();
     }
-    const est = { cierre: 0, muneca: 0, codo: 0, expl: 0, guante: false, transp: false };
+    const est = { cierre: 0, pulgar: 0, muneca: 0, codo: 0, expl: 0, guante: false, transp: false };
     const transparentes = ['P01', 'P02', 'P03', 'P09', 'P10', 'P24'].map(k => porId[k]).filter(Boolean);
     function aplicar() {
-      const r = Math.PI / 180, e = est.expl > 0.001 ? est.expl : 0, c = e ? 0 : est.cierre, t1 = c * mB.nudillo_max;
+      const r = Math.PI / 180, e = est.expl > 0.001 ? est.expl : 0, c = e ? 0 : Math.min(est.cierre, eoP && est.pulgar > 27 ? mov.pulgar.toque_pinza : 1), t1 = c * mB.nudillo_max;   // en pinza el índice se detiene al tocar el pulgar
       ['indice', 'medio', 'anular', 'menique'].forEach((n, k) => { const g = G[n], d = mB.dedos[n], Jk = J[k];
         g.g0.quaternion.setFromAxisAngle(ejeA, t1 * r); g.g1.quaternion.setFromAxisAngle(Jk[1].e, interp(t1, d.nudillo, d.media) * r); g.g2.quaternion.setFromAxisAngle(Jk[2].e, interp(t1, d.nudillo, d.punta) * r); });
       dif.position.copy(V3(DF.ea)).multiplyScalar(-interp(t1, DF.nudillo, DF.carro));                          // el carro va hacia la muñeca
       Hm.position.set(...[0, 1, 2].map(i => interp(t1, DF.nudillo, DF.H.map(h => h[i]))));                         // punta del cuerno
       muneca.quaternion.setFromAxisAngle(ejeG, est.muneca * r);
       codo.quaternion.setFromAxisAngle(ejeCodo, mov.sg * est.codo * r);
+      if (eoP) G.pulgar.g0.quaternion.setFromAxisAngle(eoP, (e ? 0 : est.pulgar) * r);                    // pulgar: abierto / botella / pinza
       todas.forEach(m => m.position.copy(m.userData.base).addScaledVector(m.userData.dir, e));
       bielasImp.forEach(m => m.visible = e > 0); gB.visible = !e && !est.guante;
       guante.forEach(m => m.visible = est.guante && !e);
@@ -190,6 +191,8 @@
     ['¿Guante cosmético real o pintura?', 'Un guante de silicón tapa las uniones y protege del agua; tiene que ser de su talla (la mano mide como la suya).'],
     ['¿Peso máximo aceptable?', `El diseño pesa ≈${S.peso_g} g. Si se siente pesada, se puede aligerar el antebrazo y la palma por dentro.`],
     ['¿Su posición neutra es “pulgar arriba” como la calculé?', `La calculé con el eje del codo del escaneo: la neutra queda a ${Math.round(S.giro.neutra_desde_modelo)}° de la postura del modelo (puede variar ±15°). Si al ponérsela la mano descansa girada, se corrige solo en el programa.`],
+    ['¿Cómo agarra con el pulgar si no tiene motor?', 'Como en varias manos comerciales (por ejemplo la bebionic), el pulgar se coloca con la otra mano ANTES de agarrar: abierto, botella (20°) o pinza (35°). Después la mano cierra y los dedos aprietan el objeto contra el pulgar y la palma; en pinza la punta del índice llega a la punta del pulgar.'],
+    ['¿Por qué gira la muñeca y no todo el antebrazo?', 'En el cuerpo, el radio gira alrededor del cúbito a lo largo del antebrazo. En una prótesis el socket tiene que quedarse fijo en el muñón (si girara, el electrodo se movería del músculo y el socket se aflojaría), así que el giro se pone en la muñeca, igual que en las prótesis comerciales.'],
     ['¿Le bastan clics cada 20°?', 'Es suficiente para comer, beber y escribir. Si quiere pasos más finos (10°), se agregan muescas al eje.'],
     ['¿Quién hará el ajuste clínico?', 'El socket viene del escaneo de hoy; el muñón cambia de volumen. Conviene imprimir un socket de prueba y que lo revise un protesista.']];
   $('pregs').innerHTML = PREG.map(([q, a]) => `<li><b>${q}</b><span>${a}</span></li>`).join('');
@@ -297,7 +300,7 @@
   function marcar() { document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.classList.toggle('on', { anim: animC, giro: animG, explA: animE, guante: E.guante, transp: E.transp, munon: pe.refs.munon.ms.visible, ref: pe.refs.brazo_derecho.ms.visible }[b.dataset.t])); }
   document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.onclick = () => {
     const t = b.dataset.t;
-    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; }
+    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; if (animC && pulObj === 0) { pulObj = 20; marcarP(); } }
     if (t === 'giro') { animG = !animG; animE = false; tG = 0; $('cExpl').value = 0; if (animG) enfocar(Math.PI / 2 + 0.25, 0.25, 2.2, true); }
     if (t === 'explA') { animE = !animE; animC = false; tE = 0; E.expl = 1; pe.aplicar(); enfocar(-2.3, 0.5, 2.4, true); }
     if (t === 'guante') E.guante = !E.guante; if (t === 'transp') E.transp = !E.transp;
@@ -305,6 +308,9 @@
     if (t === 'ref') { const r = pe.refs.brazo_derecho.ms; r.visible = !r.visible; marcar(); leer(); enfocar(Math.PI, 1.5, 2.4); }
     marcar(); leer();
   });
+  let pulObj = 0;
+  function marcarP() { document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.classList.toggle('on', +b.dataset.p === pulObj)); }
+  document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.onclick = () => { pulObj = +b.dataset.p; $('cExpl').value = 0; animE = false; marcar(); marcarP(); leer(); });
   const VISTA = { dorso: [Math.PI, 1.5, 2.6], palma: [Math.PI, -1.5, 2.6], lado: [0, 0.05, 2.6], mano: [0.35, 0.35, 3.2, true] };
   const desde = phi => { const c = Math.cos(phi), s_ = Math.sin(phi); return c >= 0 ? [0, Math.max(-1.5, Math.min(1.5, phi))] : [Math.PI, Math.max(-1.5, Math.min(1.5, Math.atan2(s_, -c)))]; };
   const FI = { dorso: Math.PI / 2, palma: -Math.PI / 2, lado: 0 };
@@ -312,6 +318,7 @@
     if (FI[v] == null) return enfocar(a, e, k, m); const [az, el] = desde(FI[v] - E.muneca * Math.PI / 180); enfocar(az, el, k, m); });
   $('cCodo').addEventListener('change', () => enfocar());
   ve.cada = dt => {
+    if (Math.abs(E.pulgar - pulObj) > 0.05) { E.pulgar += Math.sign(pulObj - E.pulgar) * Math.min(Math.abs(pulObj - E.pulgar), 60 * dt); pe.aplicar(); }
     if (animC) { tC += dt; $('cCierre').value = Math.round(50 * (1 - Math.cos(tC * 1.5))); leer(); }
     if (animG) { tG += dt; $('cMuneca').value = Math.round(80 * Math.sin(tG * 0.9)); leer(); }
     if (animE) { tE += dt; const u = (tE % 6) / 6, v = u < 0.35 ? u / 0.35 : u < 0.6 ? 1 : u < 0.95 ? 1 - (u - 0.6) / 0.35 : 0; $('cExpl').value = Math.round(sm(v) * 100); leer(); }
