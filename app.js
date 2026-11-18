@@ -75,6 +75,7 @@
     op = op || {};
     const piv = V3(mov.piv), ejeCodo = V3(mov.eje).normalize(), wc = V3(mov.giro.eje_punto), dirM = V3(mov.d).normalize(), ejeG = V3(mov.giro.eje_dir).normalize(), ejeA = V3(mov.eje_comun.dir).normalize();
     const codo = new THREE.Group(); codo.position.copy(piv); escena.add(codo);
+    const fijo = new THREE.Group(); escena.add(fijo);                    // brazalete: va en el brazo (no se mueve con el codo)
     const prot = new THREE.Group(); prot.position.copy(piv).multiplyScalar(-1); codo.add(prot);
     const muneca = new THREE.Group(); muneca.position.copy(wc); prot.add(muneca);
     const mano = new THREE.Group(); mano.position.copy(wc).multiplyScalar(-1); muneca.add(mano);
@@ -89,7 +90,7 @@
       G[n] = { B1: [g0, q], B2: [g1, Jk[1].p], B3: [g2, Jk[2].p], g0, g1, g2, q };
     });
     const dif = new THREE.Group(); mano.add(dif);                         // carro + balancines: se deslizan al cerrar
-    const padre = (g, d) => g === 'dif' ? [dif, null] : g === 'brazo' ? [prot, null] : g === 'muneca' ? [muneca, wc] : g === 'palma' ? [mano, null] : g === 'pulgar' ? G.pulgar.pulgar : G[d] ? G[d][g] : [prot, null];
+    const padre = (g, d) => g === 'brazalete' ? [fijo, null] : g === 'dif' ? [dif, null] : g === 'brazo' ? [prot, null] : g === 'muneca' ? [muneca, wc] : g === 'palma' ? [mano, null] : g === 'pulgar' ? G.pulgar.pulgar : G[d] ? G[d][g] : [prot, null];
     const todas = [], porId = {}, bielasImp = [], guante = [];
     function poner(clave, o, material, lista) {
       const [pa, org] = padre(o.grupo, o.dedo), ms = new THREE.Mesh(geo(clave, o), material);
@@ -110,6 +111,8 @@
     const Hm = new THREE.Object3D(); mano.add(Hm); pares.push([Hm, marca(dif, DF.Q0)]);                                          // biela del cuerno
     const Hp = new THREE.Object3D(); mano.add(Hp); if (mov.pulgar && mov.pulgar.E0) pares.push([Hp, marca(G.pulgar.g0, mov.pulgar.E0, J[mov.orden.indexOf('pulgar')][0].p)]);   // varilla del pulgar (clip)
     const gB = new THREE.Group(); mano.add(gB);
+    const correas = [], gCorrea = new THREE.CylinderGeometry(2.2, 2.2, 1, 10), mCorrea = mat('#2a2d33', { roughness: 0.9 });   // correas de velcro (brazalete -> anclas)
+    if (mov.correas) Object.keys(mov.correas.anclas).forEach(k => { const a = marca(fijo, mov.correas.brazalete[k]), b = marca(prot, mov.correas.anclas[k]), br = new THREE.Mesh(gCorrea, mCorrea); escena.add(br); correas.push([a, b, br]); });
     pares.forEach(() => { const b = new THREE.Mesh(gBar, mBar); gB.add(b); barras.push(b); });
     const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _y = new THREE.Vector3(0, 1, 0);
     function bielas() {
@@ -144,6 +147,8 @@
       Hm.position.set(...[0, 1, 2].map(i => interp(t1, DF.nudillo, DF.H.map(h => h[i]))));                         // punta del cuerno
       muneca.quaternion.setFromAxisAngle(ejeG, est.muneca * r);
       codo.quaternion.setFromAxisAngle(ejeCodo, mov.sg * est.codo * r);
+      correas.forEach(([a, b, br]) => { escena.updateMatrixWorld(true); a.getWorldPosition(_a); b.getWorldPosition(_b); const L = _a.distanceTo(_b);
+        br.position.copy(_a).add(_b).multiplyScalar(0.5); br.scale.set(1, L, 1); br.quaternion.setFromUnitVectors(_y, _b.clone().sub(_a).normalize()); br.visible = !e; });
       if (eoP) { G.pulgar.g0.quaternion.setFromAxisAngle(eoP, pu * r); Hp.position.set(...[0, 1, 2].map(i => interp(pu, mov.pulgar.phi, mov.pulgar.H.map(h => h[i])))); }   // pulgar con motor
       todas.forEach(m => m.position.copy(m.userData.base).addScaledVector(m.userData.dir, e));
       bielasImp.forEach(m => m.visible = e > 0); gB.visible = !e && !est.guante;
@@ -202,7 +207,7 @@
   // ---------------------------------------------------------------- tabla de piezas + inspector
   const TOR = { C13: 'tornillo_collarin', C14: 'tornillo_union', C15: 'tornillo_eje', C16: 'tornillo_acople' };
   const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) && c.id !== 'P02' || ['C01', 'C02', 'C08', 'C09', 'C10', 'C11', 'C12', 'C20'].includes(c.id),
-               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16', 'C17'].includes(c.id), socket: c => ['P01', 'C07', 'C14', 'C18', 'C19'].includes(c.id),
+               muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16', 'C17'].includes(c.id), socket: c => ['P01', 'P50', 'C07', 'C14', 'C18', 'C19', 'C21'].includes(c.id),
                imprimir: c => c.tipo === 'imprimir', comprar: c => c.tipo === 'comprar', todas: () => true };
   let filtro = 'todas';
   function tabla() {
@@ -289,7 +294,7 @@
 
   // ---------------------------------------------------------------- hero (gira sola) y explorador
   const vh = Visor($('heroLienzo'), { fondo: 0xffffff, auto: 0.25, dist: 760, el: 0.32, az: -2.5, quieto: false });
-  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
+  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; ph.est.cierre = 0.2; ph.aplicar(); { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
   const ve = Visor($('explorarLienzo'), { fondo: 0x000000, dist: 820, el: 0.42, az: -2.3, rueda: true });
   const pe = Protesis(ve.escena); { const s = pe.caja(); ve.centro.copy(s.center); ve.dist = s.radius * 2.9; }
   const enfocar = (az, el, k, soloMano) => { const s = pe.caja(soloMano, !soloMano); ve.ir(az ?? ve.az, el ?? ve.el, s.radius * (k || 2.9), s.center); };

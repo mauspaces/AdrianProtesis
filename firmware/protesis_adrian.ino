@@ -7,7 +7,8 @@
       llegue a la punta del pulgar) y se detiene solo si toca el objeto;
     * MG90S de la muñeca: gira la mano ±80° desde la neutra (pulgar arriba).
   MODO MANO (al encender):  mantener la contracción = cerrar (más fuerte = más rápido); relajar = sostiene;
-                            una contracción CORTA = abrir.
+                            una contracción CORTA = abrir. Abierta y sin usarse 3 s, se RELAJA sola (postura de reposo
+                            natural: dedos un poco doblados y pulgar a medio camino); vuelve a cerrar desde ahí.
   MODO MUÑECA:              mantener la contracción = girar; una contracción corta = cambiar el sentido.
   DOBLE contracción corta = cambiar de modo (el LED parpadea 1 vez = mano, 2 = muñeca). Del modo muñeca se regresa
   solo a la mano tras 4 s sin moverse. La mano NO se abre con la doble contracción: se puede girar sosteniendo algo.
@@ -32,6 +33,8 @@
 const int PIN_EMG = A0, PIN_BAT = A1, PIN_MANO = D2, PIN_PULGAR = D3, PIN_MUNECA = D4, PIN_LED = LED_BUILTIN;
 const float MANO_ABIERTA = 0.0, MANO_CERRADA = 80.0;          // grados del servo de los dedos (el diferencial aprieta a ~78°)
 const float PUL_A = 25.0, PUL_C = 155.0;                       // grados del servo del pulgar: abierto / cerrado (pinza)
+const float MANO_REPOSO = 16.0;                                // postura de reposo natural (20 % del cierre)
+const unsigned long T_REPOSO = 3000;                           // ms abierta sin usarse antes de relajarse
 const float ADELANTO = 0.8;                                    // el pulgar llega a cerrado cuando los dedos van al 80 %
 const float MUNECA_NEUTRA = 90.0, MUNECA_LIMITE = 77.0;        // grados del servo de la muñeca: neutra y giro máximo (tope físico a 80°)
 const int MUNECA_SENTIDO = 1;                                  // 1 o -1 (para que "positivo" sea pronación)
@@ -45,7 +48,7 @@ float base = 0, ruido = 1, maximo = 100, env = 0, umbralOn = 30, umbralOff = 18;
 float angMano = MANO_ABIERTA, ajustePulgar = 0, giro = 0;      // giro: grados desde la neutra (+ = pronación)
 int sentido = 1;                                               // sentido del giro en modo muñeca
 bool activo = false, plot = false, aliviado = true, modoMuneca = false, pulsoPendiente = false;
-unsigned long tInicio = 0, tUltimaActividad = 0, tUltimoCierre = 0, tPulso = 0, tUltimoGiro = 0;
+unsigned long tInicio = 0, tUltimaActividad = 0, tUltimoCierre = 0, tPulso = 0, tUltimoGiro = 0, tAbierta = 0;
 
 float leerEMG() { return analogReadMilliVolts(PIN_EMG); }
 float bateria() { return analogReadMilliVolts(PIN_BAT) / 1000.0 * DIVISOR; }
@@ -91,12 +94,12 @@ void setup() {
   sPulgar.setPeriodHertz(50); sPulgar.attach(PIN_PULGAR, 500, 2500);
   sMuneca.setPeriodHertz(50); sMuneca.attach(PIN_MUNECA, 500, 2500);
   mover(); escribirMuneca();
-  delay(800); calibrar(); tUltimaActividad = millis();
+  delay(800); calibrar(); tUltimaActividad = millis(); tAbierta = millis();
 }
 
 void accionPulsoCorto() {                                      // una sola contracción corta (ya se descartó que fuera doble)
   if (modoMuneca) { sentido = -sentido; tUltimoGiro = millis(); Serial.println(sentido > 0 ? F("muneca: pronacion") : F("muneca: supinacion")); }
-  else { angMano = MANO_ABIERTA; ajustePulgar = 0; aliviado = true; mover(); }
+  else { angMano = MANO_ABIERTA; ajustePulgar = 0; aliviado = true; mover(); tAbierta = millis(); }
 }
 
 void loop() {
@@ -106,7 +109,7 @@ void loop() {
   float dt = (micros() - tPrev) / 1e6f; tPrev = micros();
   while (Serial.available()) {
     char c = Serial.read();
-    if (c == 'a') { angMano = MANO_ABIERTA; ajustePulgar = 0; aliviado = true; mover(); }
+    if (c == 'a') { angMano = MANO_ABIERTA; ajustePulgar = 0; aliviado = true; mover(); tAbierta = ahora; }
     if (c == 'c') { angMano = MANO_CERRADA; aliviado = false; tUltimoCierre = ahora; mover(); }
     if (c == '+' || c == '-') { ajustePulgar += (c == '+') ? 5 : -5; mover(); Serial.printf("pulgar: %.0f\n", pulgarPara(angMano) + ajustePulgar); }
     if (c == '<' || c == '>') { giro += (c == '>') ? 10 : -10; escribirMuneca(); Serial.printf("muneca: %.0f grados\n", giro); }
@@ -133,6 +136,7 @@ void loop() {
     if (!activo && !pulsoPendiente && ahora - tUltimoGiro > T_REGRESO) cambiarModo();             // regresa sola a la mano
   } else {
     if (sostenida) { angMano += VEL_MANO * nivel * dt; angMano = constrain(angMano, MANO_ABIERTA, MANO_CERRADA); tUltimoCierre = ahora; aliviado = false; ajustePulgar = 0; mover(); }
+    if (aliviado && !activo && !pulsoPendiente && angMano <= MANO_ABIERTA + 0.5 && ahora - tAbierta > T_REPOSO) { angMano = MANO_REPOSO; mover(); }   // reposo natural
     if (!aliviado && !activo && ahora - tUltimoCierre > 1500) {  // ya agarró: los dos servos de la mano aflojan un poco (no se calientan)
       angMano = constrain(angMano - ALIVIO, MANO_ABIERTA, MANO_CERRADA); sMano.write((int)round(angMano));
       float p = pulgarPara(angMano) + ajustePulgar; p += (PUL_C > PUL_A ? -ALIVIO_PULGAR : ALIVIO_PULGAR);
