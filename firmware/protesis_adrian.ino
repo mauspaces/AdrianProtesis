@@ -19,7 +19,7 @@
   Conexiones (XIAO ESP32S3):
     A0 (D0)  <- señal del sensor EMG (SIG)            sensor VCC <- 3.3 V, GND común
     A1 (D1)  <- divisor de batería 100 kΩ / 33 kΩ (2S: 8.4 V -> 2.08 V)
-    D2       -> señal del servo de los DEDOS (MG995)   servos: alimentar con el convertidor 6 V / 3 A, NO del ESP32
+    D2       -> señal del servo de los DEDOS (MG995)   servos y XIAO: convertidor de 5 V / 5 A + capacitor 1000 µF (NO de la ESP32)
     D3       -> señal del servo del PULGAR (MG90S)
     D4       -> señal del servo de la MUÑECA (MG90S)
   Librería: ESP32Servo (Kevin Harrington), desde el Administrador de librerías de Arduino.
