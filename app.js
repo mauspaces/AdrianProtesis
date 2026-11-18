@@ -108,6 +108,7 @@
     ['indice', 'medio', 'anular', 'menique'].forEach(n => { const d = mB.dedos[n], g = G[n]; pares.push([marca(mano, d.G), marca(g.g1, d.C, J[mov.orden.indexOf(n)][1].p)], [marca(g.g0, d.E, g.q), marca(g.g2, d.F, J[mov.orden.indexOf(n)][2].p)]); });
     ['indice', 'medio', 'anular', 'menique'].forEach(n => pares.push([marca(G[n].g0, DF.L0[n], G[n].q), marca(dif, DF.B0[n])]));     // bieletas: palanca -> balancín
     const Hm = new THREE.Object3D(); mano.add(Hm); pares.push([Hm, marca(dif, DF.Q0)]);                                          // biela del cuerno
+    const Hp = new THREE.Object3D(); mano.add(Hp); if (mov.pulgar && mov.pulgar.E0) pares.push([Hp, marca(G.pulgar.g0, mov.pulgar.E0, J[mov.orden.indexOf('pulgar')][0].p)]);   // varilla del pulgar (clip)
     const gB = new THREE.Group(); mano.add(gB);
     pares.forEach(() => { const b = new THREE.Mesh(gBar, mBar); gB.add(b); barras.push(b); });
     const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _y = new THREE.Vector3(0, 1, 0);
@@ -133,17 +134,17 @@
         p[3 * i] = v.x + pc.x; p[3 * i + 1] = v.y + pc.y; p[3 * i + 2] = v.z + pc.z; }
       a.needsUpdate = true; R.ms.geometry.computeVertexNormals();
     }
-    const est = { cierre: 0, pulgar: 0, muneca: 0, codo: 0, expl: 0, guante: false, transp: false };
+    const est = { cierre: 0, muneca: 0, codo: 0, expl: 0, guante: false, transp: false };
     const transparentes = ['P01', 'P02', 'P03', 'P09', 'P10', 'P24'].map(k => porId[k]).filter(Boolean);
     function aplicar() {
-      const r = Math.PI / 180, e = est.expl > 0.001 ? est.expl : 0, c = e ? 0 : Math.min(est.cierre, eoP && est.pulgar > 27 ? mov.pulgar.toque_pinza : 1), t1 = c * mB.nudillo_max;   // en pinza el índice se detiene al tocar el pulgar
+      const r = Math.PI / 180, e = est.expl > 0.001 ? est.expl : 0, c = e ? 0 : Math.min(est.cierre, eoP ? mov.pulgar.toque_pinza : 1), t1 = c * mB.nudillo_max, pu = e ? 0 : mov.pulgar.maximo * Math.min(1, est.cierre / 0.8);   // el pulgar (MG90S) va un poco adelantado; el índice se detiene al tocarlo
       ['indice', 'medio', 'anular', 'menique'].forEach((n, k) => { const g = G[n], d = mB.dedos[n], Jk = J[k];
         g.g0.quaternion.setFromAxisAngle(ejeA, t1 * r); g.g1.quaternion.setFromAxisAngle(Jk[1].e, interp(t1, d.nudillo, d.media) * r); g.g2.quaternion.setFromAxisAngle(Jk[2].e, interp(t1, d.nudillo, d.punta) * r); });
       dif.position.copy(V3(DF.ea)).multiplyScalar(-interp(t1, DF.nudillo, DF.carro));                          // el carro va hacia la muñeca
       Hm.position.set(...[0, 1, 2].map(i => interp(t1, DF.nudillo, DF.H.map(h => h[i]))));                         // punta del cuerno
       muneca.quaternion.setFromAxisAngle(ejeG, est.muneca * r);
       codo.quaternion.setFromAxisAngle(ejeCodo, mov.sg * est.codo * r);
-      if (eoP) G.pulgar.g0.quaternion.setFromAxisAngle(eoP, (e ? 0 : est.pulgar) * r);                    // pulgar: abierto / botella / pinza
+      if (eoP) { G.pulgar.g0.quaternion.setFromAxisAngle(eoP, pu * r); Hp.position.set(...[0, 1, 2].map(i => interp(pu, mov.pulgar.phi, mov.pulgar.H.map(h => h[i])))); }   // pulgar con motor
       todas.forEach(m => m.position.copy(m.userData.base).addScaledVector(m.userData.dir, e));
       bielasImp.forEach(m => m.visible = e > 0); gB.visible = !e && !est.guante;
       guante.forEach(m => m.visible = est.guante && !e);
@@ -174,7 +175,7 @@
     '<b>No es para</b> apoyarse, empujar el cuerpo o golpes: el plástico y el socket no están hechos para eso.'].map(x => `<li>${x}</li>`).join('');
   const RECOS = {
     'Impresión': ['Todo en <b>PETG</b>: blanco para antebrazo, palma y dedos; negro (grafito) para el socket, la muñeca y el mecanismo.', 'Imprime primero <b>el índice y sus 2 bielitas</b> y ármalo: si las bisagras quedan duras o flojas, ajusta antes de imprimir todo.', 'Paredes de 4 líneas y relleno 25–35 %; <b>100 %</b> en el eje de los nudillos, el eje de la muñeca, el acople, el carro, los balancines y todas las bielas.', 'El eje de los nudillos se imprime <b>acostado sobre su cara plana</b>.', 'Socket de pie, soportes solo dentro de las alas; lija el borde.', 'Repasa barrenos con broca: Ø2.3 (M2 libre), Ø1.7 (M2 que se rosca), Ø5.4 (eje de los nudillos), Ø3.3 (M3 libre).'],
-    'Mecanismo': ['El <b>diferencial</b> debe moverse solo con el dedo: si un balancín se traba, repasa su barreno con broca Ø2.3.', 'Una gota de grasa de litio en el buje de la muñeca, el canal del carro y cada tornillo-perno.', 'Las bieletas se <b>enganchan</b> (ojo en C) en la palanca de cada dedo: si quedan flojas, una gota de pegamento de contacto en el perno, no en el ojo.', 'Pon el seguro del pulgar en <b>20°</b> para la botella y en <b>35°</b> para la pinza.'],
+    'Mecanismo': ['El <b>diferencial</b> debe moverse solo con el dedo: si un balancín se traba, repasa su barreno con broca Ø2.3.', 'Una gota de grasa de litio en el buje de la muñeca, el canal del carro y cada tornillo-perno.', 'Las bieletas se <b>enganchan</b> (ojo en C) en la palanca de cada dedo: si quedan flojas, una gota de pegamento de contacto en el perno, no en el ojo.', 'Ajusta el pulgar desde el programa (PUL_A abierto, PUL_C cerrado): con los comandos <b>+</b> y <b>−</b> por USB ves cuánto debe cerrar.'],
     'Armado': ['Centra el servo de la mano en 0° (abierta) <b>antes</b> de poner su brazo.', 'Insertos de latón M2.5/M3 si vas a desarmar seguido (los tornillos directos en plástico se barren).', 'Pasa el cable del servo de la mano por el eje hueco <b>antes</b> de bajar el eje, y deja ~3 cm flojos para el giro de la muñeca.', 'Corta las orejas del MG995 extra (segueta fina y lija): las dos mitades de la palma lo aprietan.',],
     'Electrónica y batería': ['Batería LiPo 2S <b>con protección (BMS)</b>; nunca bajar de 6.4 V.', 'Carga con el cargador USB-C 2S; la primera vez, vigílala. No la cargues tapada o al sol.', 'Fusible o polifusible de 3 A a la salida de la batería.', 'Programa la mano: abierta = 0°, cerrada = ' + S.servo_cierre + '° (con el diferencial).', 'Aísla la tarjeta con termocontráctil o una mano de barniz: el sudor llega por el socket.'],
     'Uso y cuidado': ['Los primeros días: 15–30 min y revisar la piel. Marcas rojas que no se quitan en 20 min = hay que ajustar.', 'Calceta de 1 capa normalmente; de 3 capas si el muñón está más delgado (en la mañana, con calor, después de ejercicio).', 'No mojarla: la electrónica no es a prueba de agua.', 'Limpiar el socket por dentro con alcohol diario.', 'Revisar cada semana que no haya grietas en las bisagras ni en la unión con el socket.'],
@@ -191,7 +192,7 @@
     ['¿Guante cosmético real o pintura?', 'Un guante de silicón tapa las uniones y protege del agua; tiene que ser de su talla (la mano mide como la suya).'],
     ['¿Peso máximo aceptable?', `El diseño pesa ≈${S.peso_g} g. Si se siente pesada, se puede aligerar el antebrazo y la palma por dentro.`],
     ['¿Su posición neutra es “pulgar arriba” como la calculé?', `La calculé con el eje del codo del escaneo: la neutra queda a ${Math.round(S.giro.neutra_desde_modelo)}° de la postura del modelo (puede variar ±15°). Si al ponérsela la mano descansa girada, se corrige solo en el programa.`],
-    ['¿Cómo agarra con el pulgar si no tiene motor?', 'Como en varias manos comerciales (por ejemplo la bebionic), el pulgar se coloca con la otra mano ANTES de agarrar: abierto, botella (20°) o pinza (35°). Después la mano cierra y los dedos aprietan el objeto contra el pulgar y la palma; en pinza la punta del índice llega a la punta del pulgar.'],
+    ['¿Cómo se mueve el pulgar?', 'Con su propio motor: el MG90S que quedó libre de la muñeca, escondido en la palma junto a la base del pulgar, lo mueve con una varilla de clip. La misma señal del sensor cierra los dedos y el pulgar; el pulgar va un poco adelantado para que la punta del índice llegue a su punta (pinza), y se detiene solo si toca el objeto.'],
     ['¿Por qué gira la muñeca y no todo el antebrazo?', 'En el cuerpo, el radio gira alrededor del cúbito a lo largo del antebrazo. En una prótesis el socket tiene que quedarse fijo en el muñón (si girara, el electrodo se movería del músculo y el socket se aflojaría), así que el giro se pone en la muñeca, igual que en las prótesis comerciales.'],
     ['¿Le bastan clics cada 20°?', 'Es suficiente para comer, beber y escribir. Si quiere pasos más finos (10°), se agregan muescas al eje.'],
     ['¿Quién hará el ajuste clínico?', 'El socket viene del escaneo de hoy; el muñón cambia de volumen. Conviene imprimir un socket de prueba y que lo revise un protesista.']];
@@ -200,7 +201,7 @@
 
   // ---------------------------------------------------------------- tabla de piezas + inspector
   const TOR = { C13: 'tornillo_collarin', C14: 'tornillo_union', C15: 'tornillo_eje', C16: 'tornillo_acople' };
-  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) && c.id !== 'P02' || ['C01', 'C08', 'C09', 'C10', 'C11', 'C12'].includes(c.id),
+  const FIL = { mano: c => ['palma', 'B1', 'B2', 'B3', 'pulgar', 'dif'].includes(c.grupo) && c.id !== 'P02' || ['C01', 'C02', 'C08', 'C09', 'C10', 'C11', 'C12', 'C20'].includes(c.id),
                muneca: c => ['P02', 'P03', 'P04', 'P05', 'P08', 'C03', 'C04', 'C05', 'C06', 'C13', 'C15', 'C16'].includes(c.id), socket: c => ['P01', 'C07', 'C14', 'C18', 'C19'].includes(c.id),
                imprimir: c => c.tipo === 'imprimir', comprar: c => c.tipo === 'comprar', todas: () => true };
   let filtro = 'todas';
@@ -288,7 +289,7 @@
 
   // ---------------------------------------------------------------- hero (gira sola) y explorador
   const vh = Visor($('heroLienzo'), { fondo: 0xffffff, auto: 0.25, dist: 760, el: 0.32, az: -2.5, quieto: false });
-  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; ph.est.pulgar = 35; ph.aplicar(); { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
+  const ph = Protesis(vh.escena); ph.refs.munon.ms.visible = false; { const s = ph.caja(); vh.centro.copy(s.center); vh.dist = s.radius * 3.9; }
   const ve = Visor($('explorarLienzo'), { fondo: 0x000000, dist: 820, el: 0.42, az: -2.3, rueda: true });
   const pe = Protesis(ve.escena); { const s = pe.caja(); ve.centro.copy(s.center); ve.dist = s.radius * 2.9; }
   const enfocar = (az, el, k, soloMano) => { const s = pe.caja(soloMano, !soloMano); ve.ir(az ?? ve.az, el ?? ve.el, s.radius * (k || 2.9), s.center); };
@@ -300,7 +301,7 @@
   function marcar() { document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.classList.toggle('on', { anim: animC, giro: animG, explA: animE, guante: E.guante, transp: E.transp, munon: pe.refs.munon.ms.visible, ref: pe.refs.brazo_derecho.ms.visible }[b.dataset.t])); }
   document.querySelectorAll('#chipsExp [data-t]').forEach(b => b.onclick = () => {
     const t = b.dataset.t;
-    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; if (animC && pulObj === 0) { pulObj = 35; marcarP(); } }
+    if (t === 'anim') { animC = !animC; animE = false; tC = 0; $('cExpl').value = 0; }
     if (t === 'giro') { animG = !animG; animE = false; tG = 0; $('cExpl').value = 0; if (animG) enfocar(Math.PI / 2 + 0.25, 0.25, 2.2, true); }
     if (t === 'explA') { animE = !animE; animC = false; tE = 0; E.expl = 1; pe.aplicar(); enfocar(-2.3, 0.5, 2.4, true); }
     if (t === 'guante') E.guante = !E.guante; if (t === 'transp') E.transp = !E.transp;
@@ -308,9 +309,6 @@
     if (t === 'ref') { const r = pe.refs.brazo_derecho.ms; r.visible = !r.visible; marcar(); leer(); enfocar(Math.PI, 1.5, 2.4); }
     marcar(); leer();
   });
-  let pulObj = 35; E.pulgar = 35; pe.aplicar();                                                      // se arma en pinza
-  function marcarP() { document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.classList.toggle('on', +b.dataset.p === pulObj)); }
-  document.querySelectorAll('#chipsPulgar [data-p]').forEach(b => b.onclick = () => { pulObj = +b.dataset.p; $('cExpl').value = 0; animE = false; marcar(); marcarP(); leer(); });
   const VISTA = { dorso: [Math.PI, 1.5, 2.6], palma: [Math.PI, -1.5, 2.6], lado: [0, 0.05, 2.6], mano: [0.35, 0.35, 3.2, true] };
   const desde = phi => { const c = Math.cos(phi), s_ = Math.sin(phi); return c >= 0 ? [0, Math.max(-1.5, Math.min(1.5, phi))] : [Math.PI, Math.max(-1.5, Math.min(1.5, Math.atan2(s_, -c)))]; };
   const FI = { dorso: Math.PI / 2, palma: -Math.PI / 2, lado: 0 };
@@ -318,7 +316,6 @@
     if (FI[v] == null) return enfocar(a, e, k, m); const [az, el] = desde(FI[v] - E.muneca * Math.PI / 180); enfocar(az, el, k, m); });
   $('cCodo').addEventListener('change', () => enfocar());
   ve.cada = dt => {
-    if (Math.abs(E.pulgar - pulObj) > 0.05) { E.pulgar += Math.sign(pulObj - E.pulgar) * Math.min(Math.abs(pulObj - E.pulgar), 60 * dt); pe.aplicar(); }
     if (animC) { tC += dt; $('cCierre').value = Math.round(50 * (1 - Math.cos(tC * 1.5))); leer(); }
     if (animG) { tG += dt; $('cMuneca').value = Math.round(80 * Math.sin(tG * 0.9)); leer(); }
     if (animE) { tE += dt; const u = (tE % 6) / 6, v = u < 0.35 ? u / 0.35 : u < 0.6 ? 1 : u < 0.95 ? 1 - (u - 0.6) / 0.35 : 0; $('cExpl').value = Math.round(sm(v) * 100); leer(); }

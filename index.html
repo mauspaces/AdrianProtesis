@@ -198,7 +198,6 @@
     <canvas id="explorarLienzo" class="lienzo3d marco" aria-label="Prótesis en 3D interactiva"></canvas>
     <div class="controles">
       <div class="ctrl"><label for="cCierre">Abrir y cerrar la mano</label><input id="cCierre" type="range" min="0" max="100" value="0"></div>
-      <div class="ctrl"><label>Pulgar · se coloca con la otra mano antes de agarrar</label><div class="chips" id="chipsPulgar"><button class="chip" data-p="0">Abierto</button><button class="chip" data-p="20">Botella</button><button class="chip on" data-p="35">Pinza</button></div></div>
       <div class="ctrl"><label for="cMuneca">Girar la muñeca · <span id="lMuneca">neutra</span></label><input id="cMuneca" type="range" min="-80" max="80" value="0"></div>
       <div class="ctrl"><label for="cCodo">Doblar el codo</label><input id="cCodo" type="range" min="0" max="110" value="0"></div>
       <div class="ctrl"><label for="cExpl">Separar las piezas</label><input id="cExpl" type="range" min="0" max="100" value="0"></div>
@@ -239,7 +238,7 @@
       <li>El carro jala un <b>diferencial de balancines</b>: un balancín principal y dos de dedo (índice-medio y anular-meñique).</li>
       <li>Cada balancín jala, con una <b>bieleta</b>, la <b>palanca</b> que tiene cada dedo bajo su nudillo, como un tendón flexor. Los 4 dedos giran sueltos en su eje.</li>
       <li>Si un dedo <b>toca el objeto</b>, se detiene; su balancín gira y los demás siguen cerrando hasta tocar. La mano se <b>amolda</b> a la forma del objeto.</li>
-      <li>Dentro de cada dedo, dos bielitas doblan solas la falange media y la punta, como un dedo real. El <b>pulgar</b> se pone a mano en 3 posiciones (abierto, botella, pinza).</li>
+      <li>Dentro de cada dedo, dos bielitas doblan solas la falange media y la punta, como un dedo real. El <b>pulgar</b> tiene su propio motor (MG90S) y una varilla de clip: cierra junto con los dedos con la misma señal del sensor, y la punta del índice llega a la suya (pinza).</li>
       <li>La <b>muñeca</b> es pasiva: se gira con la otra mano, hace <b>clic cada 20°</b> y topa a 80° de cada lado. El sensor EMG y su tarjeta van escondidos (el cable corre por un túnel dentro del antebrazo).</li>
     </ol>
   </div>
