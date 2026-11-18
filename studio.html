@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hand-e Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Hand-e Studio: la señal del músculo de Adrián en vivo, el entrenamiento del modelo que distingue lo que quiere hacer y el uso diario de la prótesis.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Tablero de instrumento: trazo EMG grande a la izquierda, lecturas en columna a la derecha, registro de decisiones abajo; pestañas arriba */
+:root {
+  --fondo:#ffffff; --fondo-barra:rgba(255,255,255,.88); --tinta:#0c0c0c; --gris:#5c6069; --gris-2:#8e939c; --linea:#e3e5e9; --panel:#f4f5f7;
+  --acento:#2F6FE0; --acento-suave:rgba(47,111,224,.11); --aviso:#A86400; --aviso-suave:rgba(214,138,24,.15); --bien:#12805C; --bien-suave:rgba(18,128,92,.11); --mal:#C2412D;
+  --traza:#2F6FE0; --umbral:#8e939c; --sostenida:rgba(92,96,105,.10);
+  --maq:'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --texto:'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --fondo:#0a0b0d; --fondo-barra:rgba(10,11,13,.88); --tinta:#f1f2f4; --gris:#a4a9b2; --gris-2:#6d737d; --linea:#24282f; --panel:#13161b;
+  --acento:#7AA4FF; --acento-suave:rgba(122,164,255,.15); --aviso:#F2A541; --aviso-suave:rgba(242,165,65,.15); --bien:#45C795; --bien-suave:rgba(69,199,149,.13); --mal:#FF7B67;
+  --traza:#7AA4FF; --umbral:#6d737d; --sostenida:rgba(164,169,178,.10); color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --fondo:#0a0b0d; --fondo-barra:rgba(10,11,13,.88); --tinta:#f1f2f4; --gris:#a4a9b2; --gris-2:#6d737d; --linea:#24282f; --panel:#13161b;
+  --acento:#7AA4FF; --acento-suave:rgba(122,164,255,.15); --aviso:#F2A541; --aviso-suave:rgba(242,165,65,.15); --bien:#45C795; --bien-suave:rgba(69,199,149,.13); --mal:#FF7B67;
+  --traza:#7AA4FF; --umbral:#6d737d; --sostenida:rgba(164,169,178,.10); color-scheme:dark; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--fondo); color:var(--tinta); font:400 15px/1.5 var(--texto); letter-spacing:-0.1px; -webkit-font-smoothing:antialiased; }
+body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:30; background:var(--fondo); }
+a { color:inherit; }
+button { font:inherit; color:inherit; }
+:focus-visible { outline:2px solid var(--acento); outline-offset:2px; }
+.envoltura { max-width:1320px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+.eti { font:400 12px/1.2 var(--maq); letter-spacing:.08em; text-transform:uppercase; color:var(--gris); margin:0 0 8px; }
+.det { font-size:13px; color:var(--gris); margin:4px 0 0; }
+h1, h2 { font-family:var(--maq); font-weight:400; text-transform:uppercase; text-wrap:balance; letter-spacing:-0.4px; margin:0; }
+.num { font-variant-numeric:tabular-nums; }
+/* barra */
+header.barra { position:sticky; top:env(safe-area-inset-top, 0px); z-index:20; background:var(--fondo-barra); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--linea); }
+.barra .envoltura { display:flex; align-items:center; gap:20px; min-height:60px; flex-wrap:wrap; }
+.marca { font:400 14px/1 var(--maq); letter-spacing:.06em; text-transform:uppercase; text-decoration:none; display:flex; gap:10px; align-items:center; white-space:nowrap; }
+.marca i { display:inline-block; width:14px; height:14px; background:currentColor; clip-path:polygon(0 0,60% 0,60% 40%,100% 40%,100% 100%,0 100%); }
+.marca small { color:var(--gris); font-size:12px; }
+nav.pestanas { display:flex; gap:2px; overflow-x:auto; scrollbar-width:none; }
+nav.pestanas a { padding:9px 14px; border-radius:999px; font:400 12.5px/1 var(--maq); letter-spacing:.08em; text-transform:uppercase; color:var(--gris); text-decoration:none; white-space:nowrap; }
+nav.pestanas a:hover { color:var(--tinta); }
+nav.pestanas a.activo { color:var(--tinta); background:var(--panel); }
+.conexion { margin-left:auto; display:flex; gap:10px; align-items:center; position:relative; }
+.chip-estado { display:inline-flex; align-items:center; gap:8px; height:32px; padding:0 12px; border:1px solid var(--linea); border-radius:999px; font-size:13px; white-space:nowrap; }
+.chip-estado i { width:8px; height:8px; border-radius:50%; background:var(--gris-2); }
+.chip-estado.vivo i { background:var(--bien); box-shadow:0 0 0 3px var(--bien-suave); }
+.chip-estado.sim i { background:var(--aviso); box-shadow:0 0 0 3px var(--aviso-suave); }
+.pill { display:inline-flex; align-items:center; justify-content:center; height:40px; padding:0 22px; border-radius:999px; background:var(--tinta); color:var(--fondo); border:1px solid var(--tinta); font:500 14px/1 var(--texto); cursor:pointer; white-space:nowrap; text-decoration:none; }
+.pill:disabled { opacity:.4; cursor:not-allowed; }
+.pill.borde { background:transparent; color:var(--tinta); border-color:var(--linea); }
+.pill.borde:hover { border-color:var(--tinta); }
+.pill.chico { height:34px; padding:0 16px; font-size:13px; }
+.icono { width:36px; height:36px; border-radius:50%; border:1px solid var(--linea); background:transparent; cursor:pointer; display:inline-grid; place-items:center; }
+.icono svg { width:16px; height:16px; }
+.panel-conexion { position:absolute; right:0; top:46px; width:min(360px, calc(100vw - 32px)); background:var(--fondo); border:1px solid var(--linea); border-radius:14px; padding:14px; box-shadow:0 18px 40px rgba(0,0,0,.14); display:grid; gap:8px; z-index:25; }
+.opcion { text-align:left; display:grid; gap:2px; padding:12px 14px; border:1px solid var(--linea); border-radius:10px; background:transparent; cursor:pointer; }
+.opcion:hover { border-color:var(--tinta); }
+.opcion b { font-weight:500; }
+.opcion span { font-size:13px; color:var(--gris); }
+.aviso-sim { background:var(--aviso-suave); border-bottom:1px solid var(--linea); font-size:13px; }
+.aviso-sim .envoltura { padding-block:8px; }
+/* vistas */
+main { padding-block:24px 64px; }
+.vista[hidden] { display:none !important; }
+.cuadricula { display:grid; grid-template-columns:minmax(0, 1fr) 300px; gap:24px; align-items:start; }
+.tarjeta { background:var(--panel); border-radius:16px; padding:18px 18px 14px; min-width:0; }
+.cab { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:10px; }
+.cab .det { margin:0; }
+.leyenda { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--gris); }
+.leyenda i { display:inline-block; width:14px; height:3px; border-radius:2px; vertical-align:middle; margin-right:6px; background:var(--traza); }
+.leyenda i.on { background:transparent; border-top:2px dashed var(--umbral); height:0; }
+.leyenda i.prop { height:10px; width:10px; background:var(--acento-suave); border:1px solid var(--acento); }
+.leyenda i.ign { height:10px; width:10px; background:var(--aviso-suave); border:1px solid var(--aviso); }
+#cvTraza { width:100%; height:300px; display:block; }
+.demo { display:flex; align-items:center; gap:10px; min-height:22px; font-size:13px; color:var(--gris); margin-top:6px; }
+.demo b { color:var(--tinta); font-weight:500; }
+.sim-ctrl { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--linea); }
+.sim-ctrl .pill { user-select:none; -webkit-user-select:none; touch-action:none; }
+.interruptor { display:inline-flex; gap:8px; align-items:center; font-size:13px; color:var(--gris); margin-left:auto; cursor:pointer; }
+.interruptor input { accent-color:var(--acento); width:16px; height:16px; }
+.gestos { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:16px; margin-top:14px; }
+.gesto { border-top:1px solid var(--linea); padding-top:10px; }
+.gesto b { display:block; font-weight:500; font-size:14px; }
+.gesto span { font-size:13px; color:var(--gris); }
+.lecturas { display:grid; gap:0; }
+.lectura { border-top:1px solid var(--linea); padding:14px 0; }
+.lectura:last-child { border-bottom:1px solid var(--linea); }
+.valor { font:400 30px/1.05 var(--maq); text-transform:uppercase; margin:0; letter-spacing:-0.3px; }
+.valor small { font-size:15px; color:var(--gris); text-transform:none; }
+.barra-dedos { height:8px; border-radius:6px; background:var(--panel); border:1px solid var(--linea); overflow:hidden; margin-top:10px; }
+.barra-dedos i { display:block; height:100%; width:0; background:var(--tinta); transition:width .12s linear; }
+#dial { width:100%; max-width:220px; height:auto; display:block; margin-top:4px; }
+#dial .arco { fill:none; stroke:var(--linea); stroke-width:8; stroke-linecap:round; }
+#dial .marca-d { stroke:var(--gris-2); stroke-width:1.5; }
+#dial .aguja { stroke:var(--tinta); stroke-width:3; stroke-linecap:round; transition:transform .12s linear; transform-origin:110px 100px; }
+#dial .eje { fill:var(--tinta); }
+#dial text { fill:var(--gris); font:11px var(--texto); }
+.chip { display:inline-flex; align-items:center; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:500; white-space:nowrap; }
+.chip.prop { background:var(--acento-suave); color:var(--acento); }
+.chip.ign { background:var(--aviso-suave); color:var(--aviso); }
+.chip.sos { background:var(--sostenida); color:var(--tinta); }
+.chip.reg { background:var(--bien-suave); color:var(--bien); }
+.eventos { list-style:none; margin:0; padding:0; max-height:330px; overflow:auto; }
+.eventos li { display:grid; grid-template-columns:74px 104px minmax(0, 1fr) auto; gap:12px; align-items:center; padding:9px 0; border-top:1px solid var(--linea); font-size:14px; }
+.eventos li:first-child { animation:entra .35s ease; }
+.eventos .hora, .eventos .dat { color:var(--gris); font-size:12.5px; font-variant-numeric:tabular-nums; }
+.vacio { color:var(--gris); font-size:14px; padding:12px 0; }
+@keyframes entra { from { background:var(--acento-suave); } to { background:transparent; } }
+.calib { position:absolute; inset:0; display:grid; place-items:center; background:var(--fondo-barra); border-radius:16px; z-index:3; text-align:center; padding:16px; }
+.calib h2 { font-size:34px; }
+.calib .paso-cal { display:flex; gap:8px; justify-content:center; margin-top:14px; }
+.calib .paso-cal span { height:6px; width:56px; border-radius:4px; background:var(--linea); overflow:hidden; }
+.calib .paso-cal span i { display:block; height:100%; width:0; background:var(--acento); }
+.rel { position:relative; }
+/* entrenar */
+.dos { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.15fr); gap:24px; align-items:start; }
+.texto-largo { max-width:62ch; }
+.texto-largo p { margin:10px 0; }
+h2.grande { font-size:36px; line-height:1.04; margin:6px 0 10px; }
+.radios { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; }
+.radios label { display:inline-flex; gap:8px; align-items:center; border:1px solid var(--linea); border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer; }
+.radios input { accent-color:var(--acento); }
+.fila-acciones { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+.prompt { margin-top:18px; border:1px solid var(--linea); border-radius:16px; padding:20px; background:var(--fondo); }
+.prompt .que { font:400 30px/1.08 var(--maq); text-transform:uppercase; margin:6px 0; text-wrap:balance; }
+.prompt .estado-p { font:500 15px var(--texto); color:var(--gris); }
+.prompt .estado-p.ahora { color:var(--acento); }
+.prompt .avance { height:6px; border-radius:4px; background:var(--panel); margin-top:14px; overflow:hidden; }
+.prompt .avance i { display:block; height:100%; width:0; background:var(--tinta); transition:width .2s; }
+.kpis { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
+.kpi { font:400 52px/1 var(--maq); margin:0; font-variant-numeric:tabular-nums; }
+.kpi.gris { color:var(--gris); }
+.etiqueta-origen { display:inline-flex; margin-bottom:10px; }
+table { width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; }
+th { text-align:left; font:400 11.5px/1.2 var(--maq); letter-spacing:.08em; text-transform:uppercase; color:var(--gris); padding:8px 6px 8px 0; border-bottom:1px solid var(--linea); }
+td { padding:8px 6px 8px 0; border-bottom:1px solid var(--linea); }
+td.n, th.n { text-align:right; }
+.tabla { overflow-x:auto; margin-top:16px; }
+#dispersion { width:100%; height:auto; display:block; margin-top:14px; }
+#dispersion .eje { stroke:var(--linea); }
+#dispersion text { fill:var(--gris); font:11px var(--texto); }
+#dispersion .lim { stroke:var(--mal); stroke-dasharray:4 4; }
+#dispersion .regla { stroke:var(--gris-2); stroke-dasharray:2 3; }
+#dispersion .c1 { fill:var(--acento); }
+#dispersion .c0 { fill:var(--gris-2); }
+#dispersion .c2 { fill:var(--bien); }
+#dispersion .error { fill:none; stroke:var(--mal); stroke-width:1.6; }
+/* uso */
+.kpis-uso { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:0 24px; }
+.kpis-uso > div { border-top:1px solid var(--linea); padding:14px 0; }
+.kpis-uso .valor { font-size:40px; }
+#barrasUso { width:100%; height:auto; display:block; }
+#barrasUso rect { fill:var(--tinta); }
+#barrasUso rect.hoy { fill:var(--acento); }
+#barrasUso text { fill:var(--gris); font:11px var(--texto); }
+#barrasUso line { stroke:var(--linea); }
+/* ajustes */
+.ajuste { border-top:1px solid var(--linea); padding:16px 0; }
+.ajuste label { display:flex; justify-content:space-between; gap:16px; font-weight:500; }
+.ajuste input[type=range] { width:100%; accent-color:var(--acento); margin-top:12px; }
+.info-tabla td:first-child { color:var(--gris); width:46%; }
+.seguro { border-left:3px solid var(--bien); padding:4px 0 4px 14px; margin-top:18px; }
+#toast { position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%); background:var(--tinta); color:var(--fondo); padding:12px 18px; border-radius:12px; font-size:14px; max-width:calc(100vw - 32px); z-index:40; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+footer { border-top:1px solid var(--linea); color:var(--gris); font-size:13px; }
+footer .envoltura { padding-block:18px 28px; display:flex; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+@media (max-width: 980px) { .cuadricula, .dos { grid-template-columns:minmax(0, 1fr); } .lecturas { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 20px; } }
+@media (max-width: 640px) {
+  nav.pestanas { order:3; width:100%; margin:0 -4px 8px; }
+  .gestos { grid-template-columns:minmax(0, 1fr); gap:8px; }
+  #cvTraza { height:220px; }
+  .eventos li { grid-template-columns:62px minmax(0, 1fr) auto; }
+  .eventos .dat { grid-column:2 / -1; }
+  .kpis-uso { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .kpi { font-size:42px; }
+  h2.grande { font-size:28px; }
+  .interruptor { margin-left:0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<header class="barra">
+  <div class="envoltura">
+    <a class="marca" href="./index.html" title="Volver al manual de la prótesis"><i></i>Hand-e Studio <small>v8</small></a>
+    <nav class="pestanas" aria-label="Secciones">
+      <a href="#vivo" data-vista="vivo">En vivo</a>
+      <a href="#entrenar" data-vista="entrenar">Entrenar</a>
+      <a href="#uso" data-vista="uso">Uso</a>
+      <a href="#ajustes" data-vista="ajustes">Ajustes</a>
+    </nav>
+    <div class="conexion">
+      <span id="chipConexion" class="chip-estado sim"><i></i><span id="chipTexto">Simulación</span></span>
+      <button id="btnConectar" class="pill chico" aria-expanded="false" aria-controls="panelConexion">Conectar</button>
+      <button id="btnTema" class="icono" aria-label="Cambiar entre tema claro y oscuro" title="Tema claro u oscuro"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
+      <div id="panelConexion" class="panel-conexion" hidden>
+        <p class="eti">Conectar con la prótesis</p>
+        <button class="opcion" id="cBLE"><b>Bluetooth</b><span>La prótesis armada, sin cables. Chrome o Edge en computadora o Android.</span></button>
+        <button class="opcion" id="cUSB"><b>Cable USB</b><span>La tarjeta en la mesa o con el antebrazo abierto.</span></button>
+        <button class="opcion" id="cSIM"><b>Simulación</b><span>Sin prótesis: señales sintéticas para practicar y presentar.</span></button>
+        <p id="notaApi" class="det" hidden></p>
+      </div>
+    </div>
+  </div>
+</header>
+<div id="avisoSim" class="aviso-sim"><div class="envoltura"><b>Simulación.</b> Las señales las genera la app con un modelo del músculo; no son de Adrián. Conecta la prótesis para ver sus datos reales.</div></div>
+
+<main class="envoltura">
+  <!-- EN VIVO -->
+  <section id="v-vivo" class="vista" aria-label="En vivo">
+    <div class="cuadricula">
+      <div class="tarjeta rel">
+        <div class="cab">
+          <div><p class="eti">Señal del músculo</p><p class="det">Envolvente EMG en % de su contracción voluntaria máxima (CVM) · últimos 8 s</p></div>
+          <div class="leyenda"><span><i></i>Señal</span><span><i class="on"></i>Umbrales</span><span><i class="prop"></i>A propósito</span><span><i class="ign"></i>Sin querer</span></div>
+        </div>
+        <canvas id="cvTraza" aria-label="Gráfica en vivo de la señal del músculo con sus umbrales"></canvas>
+        <div class="demo" id="demoFila"><span class="chip ign" id="demoChip">Demostración</span><span id="demoTexto">Adrián simulado hace gestos cada 3 s</span></div>
+        <div class="sim-ctrl" id="simControles">
+          <button class="pill chico" id="bSostener" title="Mantén presionado (o la barra espaciadora)">Aprieta y sostén</button>
+          <button class="pill chico borde" id="bPulso">Pulso corto</button>
+          <button class="pill chico borde" id="bMover">Mueve el brazo sin querer</button>
+          <label class="interruptor"><input type="checkbox" id="chkAuto" checked> Demostración automática</label>
+        </div>
+        <div class="gestos">
+          <div class="gesto"><b>Aprieta y sostén</b><span>Cierra la mano. Con algo agarrado, gira la muñeca sin soltar.</span></div>
+          <div class="gesto"><b>Pulso corto</b><span>Abre la mano. Con la mano abierta, entra al modo muñeca.</span></div>
+          <div class="gesto"><b>Movimiento sin querer</b><span>El modelo entrenado con Adrián lo reconoce y no hace nada.</span></div>
+        </div>
+        <div id="calib" class="calib" hidden>
+          <div><p class="eti" id="calEti">Calibración · 6 s</p><h2 id="calTitulo">Relaja el brazo</h2><p class="det" id="calTexto">Midiendo el reposo de hoy</p>
+            <div class="paso-cal"><span><i id="calB1"></i></span><span><i id="calB2"></i></span></div></div>
+        </div>
+      </div>
+      <aside class="lecturas" aria-label="Estado de la prótesis">
+        <div class="lectura"><p class="eti">Mano</p><p class="valor" id="rMano">Abierta</p><div class="barra-dedos"><i id="barDedos"></i></div><p class="det num" id="rManoDet">Dedos a 0° de 80°</p></div>
+        <div class="lectura"><p class="eti">Muñeca</p>
+          <svg id="dial" viewBox="0 0 220 118" aria-hidden="true"><path class="arco" d="M 26.4 129.7 A 90 90 0 0 1 193.6 129.7" transform="translate(0,-14)"/>
+            <line class="marca-d" x1="110" y1="16" x2="110" y2="26"/><text x="110" y="12" text-anchor="middle">0°</text><text x="14" y="112">−80°</text><text x="206" y="112" text-anchor="end">+80°</text>
+            <line id="aguja" class="aguja" x1="110" y1="100" x2="110" y2="30"/><circle class="eje" cx="110" cy="100" r="5"/></svg>
+          <p class="det num" id="rMunecaDet">0° · pulgar arriba</p></div>
+        <div class="lectura"><p class="eti">Modo</p><p class="valor" id="rModo">Mano</p></div>
+        <div class="lectura"><p class="eti">Decide los pulsos</p><p class="valor" id="rModelo" style="font-size:22px">Regla fija</p><p class="det" id="rModeloDet">80 ms y 35 % de su fuerza</p></div>
+        <div class="lectura"><p class="eti">Batería · arranque</p><p class="valor num" id="rBat">—</p><p class="det num" id="rLat">El motor arranca a los — ms de detectar</p></div>
+      </aside>
+    </div>
+    <div class="tarjeta" style="margin-top:24px">
+      <div class="cab"><div><p class="eti">Cada contracción y lo que decidió</p><p class="det">Lo más reciente arriba. Un pulso dura menos de 350 ms.</p></div></div>
+      <ol id="listaEventos" class="eventos"><li class="vacio">Aún no hay contracciones.</li></ol>
+    </div>
+  </section>
+
+  <!-- ENTRENAR -->
+  <section id="v-entrenar" class="vista" aria-label="Entrenar" hidden>
+    <div class="dos">
+      <div class="texto-largo">
+        <p class="eti">Aprendizaje automático con sus señales</p>
+        <h2 class="grande">Enseña a la prótesis a distinguir lo que Adrián quiere</h2>
+        <p>Un pulso corto abre la mano, pero un golpe o un movimiento del brazo también puede producir un pulso. Adrián hace pulsos a propósito, movimientos sin apretar y contracciones sostenidas; la app aprende a separarlos con un análisis discriminante lineal sobre cinco rasgos de cada contracción y lo guarda en la prótesis.</p>
+        <p class="det">Mientras entrenas, la mano no se mueve. Los resultados se miden dejando uno fuera: cada pulso se juzga con un modelo que nunca lo vio.</p>
+        <div class="radios" role="radiogroup" aria-label="Duración del entrenamiento">
+          <label><input type="radio" name="plan" id="planRapido" value="rapido" checked> Rápido · 10 + 8 + 5 (≈ 2 min)</label>
+          <label><input type="radio" name="plan" id="planCompleto" value="completo"> Completo · 20 + 15 + 10 (≈ 4 min)</label>
+        </div>
+        <label class="interruptor" id="filaAutoEntreno" style="margin-left:0"><input type="checkbox" id="chkAutoEntreno" checked> En simulación, Adrián simulado hace cada gesto</label>
+        <div class="fila-acciones">
+          <button class="pill" id="btnEntrenar">Empezar entrenamiento</button>
+          <button class="pill borde" id="btnCancelar" hidden>Cancelar</button>
+        </div>
+        <div class="prompt" id="prompt" hidden>
+          <p class="eti" id="pPaso">Pulso corto · 1 de 10</p>
+          <p class="que" id="pQue">Haz un pulso corto a propósito</p>
+          <p class="estado-p" id="pEstado">Prepárate…</p>
+          <div class="avance"><i id="pAvance"></i></div>
+        </div>
+      </div>
+      <div class="tarjeta" id="resultados">
+        <span class="chip ign etiqueta-origen" id="rOrigen">Ejemplo con la simulación</span>
+        <div class="kpis">
+          <div><p class="eti">Modelo entrenado</p><p class="kpi" id="kModelo">—</p><p class="det" id="kModeloDet">aciertos en pulsos</p></div>
+          <div><p class="eti">Regla fija</p><p class="kpi gris" id="kRegla">—</p><p class="det">los mismos pulsos</p></div>
+        </div>
+        <div class="tabla"><table><thead><tr><th>Gesto</th><th class="n">Intentos</th><th class="n">Regla fija</th><th class="n">Modelo</th></tr></thead><tbody id="tablaClases"></tbody></table></div>
+        <svg id="dispersion" viewBox="0 0 560 300" role="img" aria-label="Duración contra pico de cada contracción registrada"></svg>
+        <p class="det">Cada punto es una contracción. Azul: pulso a propósito · gris: movimiento sin querer · verde: sostenida. Círculo rojo: el modelo se equivocó.</p>
+        <div class="fila-acciones">
+          <button class="pill" id="btnGuardarModelo">Guardar en la prótesis</button>
+          <button class="pill borde chico" id="btnCopiarCSV">Copiar datos (CSV)</button>
+          <button class="pill borde chico" id="btnDescargarCSV" hidden>Descargar CSV</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USO -->
+  <section id="v-uso" class="vista" aria-label="Uso" hidden>
+    <div class="dos">
+      <div class="texto-largo">
+        <p class="eti">Para el terapeuta</p>
+        <h2 class="grande">Cuánto la usa de verdad</h2>
+        <p>La prótesis cuenta cada agarre, apertura y giro, y los guarda en su memoria aunque se apague. Cuando conectas la app, ves el acumulado y la app guarda una foto del día en este navegador para mostrar la tendencia.</p>
+        <p class="det">Saber si la usa a diario ayuda a detectar a tiempo que la va a dejar: en adultos, cerca de 1 de cada 4 abandona su prótesis eléctrica (Biddiss y Chau, 2007).</p>
+        <span class="chip ign" id="usoOrigen">Ejemplo con la simulación</span>
+      </div>
+      <div class="tarjeta">
+        <div class="kpis-uso" id="kpisUso"></div>
+        <p class="eti" style="margin-top:18px">Acciones por día</p>
+        <svg id="barrasUso" viewBox="0 0 560 190" role="img" aria-label="Acciones por día"></svg>
+        <p class="det" id="usoNota"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="v-ajustes" class="vista" aria-label="Ajustes" hidden>
+    <div class="dos">
+      <div>
+        <p class="eti">Ajustes del protesista</p>
+        <h2 class="grande">Sensibilidad y velocidad</h2>
+        <div class="ajuste"><label for="rangoSens"><span>Se enciende con</span><span class="num" id="vSens">25 % de su fuerza</span></label>
+          <input type="range" id="rangoSens" min="12" max="45" step="1" value="25"><p class="det">Más bajo responde a contracciones más suaves, pero se activa más fácil sin querer.</p></div>
+        <div class="ajuste"><label for="rangoVel"><span>Velocidad de la mano</span><span class="num" id="vVel">100 %</span></label>
+          <input type="range" id="rangoVel" min="50" max="150" step="5" value="100"><p class="det">Con contracción máxima, los dedos cierran a 140° por segundo × este porcentaje.</p></div>
+        <div class="fila-acciones">
+          <button class="pill" id="btnCalibrar">Calibrar ahora</button>
+          <button class="pill borde chico" id="btnBorrarModelo">Borrar modelo</button>
+          <button class="pill borde chico" id="btnBorrarUso">Borrar contadores</button>
+        </div>
+        <p class="seguro det"><b style="color:var(--tinta)">La app no puede mover la prótesis.</b> Solo el músculo de Adrián la mueve. Desde aquí se mira, se entrena y se ajusta.</p>
+      </div>
+      <div class="tarjeta">
+        <p class="eti">La prótesis conectada</p>
+        <div class="tabla"><table class="info-tabla"><tbody id="tablaInfo"></tbody></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="envoltura"><span>Hand-e · prótesis mioeléctrica de Adrián · firmware v8</span><span><a href="./index.html">Manual de armado</a></span></div></footer>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+'use strict';
+(() => {
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const NUS = '6e400001-b5a3-f393-e0a9-e50e24dcca9e', NUS_RX = '6e400002-b5a3-f393-e0a9-e50e24dcca9e', NUS_TX = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+const SITIO = 'https://mauspaces.github.io/AdrianProtesis/studio.html';
+const T_CORTO = 0.35, enc = new TextEncoder();
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const guardado = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+const dormir = ms => new Promise(r => setTimeout(r, ms));
+let reloj = () => performance.now();                            // en simulación: el reloj de la prótesis simulada
+async function esperarA(fn, ms) { const t0 = reloj(); while (reloj() - t0 < ms) { const v = fn(); if (v) return v; await dormir(30); } return fn() || null; }
+async function pausa(ms) { const t0 = reloj(); while (reloj() - t0 < ms) await dormir(30); }
+
+// ======================================================= prótesis simulada: el mismo programa que la ESP32 (firmware v8)
+class ProtesisSimulada {
+  constructor(salida) {
+    this.salida = salida; this.silencio = false; this.t = 0; this.gestos = []; this.linea = ''; this.manual = null; this.onEvento = null;
+    this.cfg = { base: 1450 + rnd(-30, 30), ruido: 6 + rnd(0, 3), fuerza: 600 + rnd(-40, 60) };
+    Object.assign(this, { base: 0, ruido: 1, maximo: 100, lp: 0, env: 0, umbralOn: 30, umbralOff: 18, sens: 0.25, vel: 1,
+      angMano: 0, giro: 0, sentidoGiro: 1, modoMuneca: false, agarrado: false, aliviado: true, registro: false,
+      activo: false, seMovio: false, tInicio: 0, tUltimaActividad: 0, tUltimoMov: 0, tAbierta: 0,
+      evPico: 0, evArea: 0, evSuma: 0, evN: 0, evTPico: 0, manoInicio: 0, giroInicio: 0, agarradoInicio: false, munecaInicio: false,
+      fuente: 0, mod: null, vBat: 7.96, estadoBat: 0, stream: false, tTel: 0, tEst: 0, tMin: 0, bloqueo: 0, cal: null });
+    this.uso = { cierres: 412, aperturas: 398, giros: 57, ignorados: 23, minutos: 1264, encendidos: 9 };   // ejemplo
+  }
+  emitir(s) { if (!this.silencio) this.salida(s); }
+  // ---- el músculo simulado
+  activacion(t) { let a = 0; for (const g of this.gestos) { const u = t - g.ini; if (u >= 0 && u < g.dur) a = Math.max(a, g.f(u)); } return a; }
+  muestra(t) { const a = this.activacion(t); return this.cfg.base + this.cfg.fuerza * a * (1 + 0.18 * gauss()) + this.cfg.ruido * gauss(); }
+  gesto(tipo, retraso = 30, op = {}) {
+    const ini = this.t + retraso; let g;
+    if (tipo === 'corta') { const D = op.D || rnd(140, 330), A = op.A || rnd(0.38, 0.95); g = { ini, dur: D, f: u => A * Math.sin(Math.PI * u / D) ** 2 }; }
+    else if (tipo === 'sostenida') { const D = op.D || rnd(650, 1500), A = op.A || rnd(0.55, 1.0), s = 140, b = 180;
+      g = { ini, dur: D + b, f: u => A * (u < s ? u / s : u < D ? 1 + 0.06 * Math.sin(u / 37) : Math.max(0, 1 - (u - D) / b)) }; }
+    else {                                                     // el electrodo se mueve sobre la piel: uno o dos picos rápidos
+      const A = rnd(0.25, 1.0), su = rnd(6, 30), tau = rnd(22, 85), dos = Math.random() < 0.35, sep = rnd(70, 160), A2 = A * rnd(0.4, 0.9);
+      const pico = (v, a) => v < 0 ? 0 : v < su ? a * v / su : a * Math.exp(-(v - su) / tau);
+      g = { ini, dur: su + 6 * tau + (dos ? sep : 0), f: u => Math.max(pico(u, A), dos ? pico(u - sep, A2) : 0) };
+    }
+    g.tipo = tipo; this.gestos.push(g); return g;
+  }
+  apretar() { if (this.manual) return; const A = rnd(0.72, 0.95); const g = { ini: this.t + 10, dur: 1e9, suelta: null, tipo: 'manual',
+    f: u => { const s = Math.min(1, u / 140); if (g.suelta == null) return A * s * (1 + 0.05 * Math.sin(u / 37)); const v = u - g.suelta; return A * s * Math.exp(-v / 55); } };
+    this.gestos.push(g); this.manual = g; }
+  soltar() { const g = this.manual; if (!g) return; g.suelta = Math.max(0, this.t - g.ini); g.dur = g.suelta + 400; this.manual = null; }
+  ocupado() { return this.activo || this.cal || this.t < this.bloqueo || this.gestos.some(g => this.t < g.ini + g.dur); }
+  // ---- firmware
+  tic(n) { this.bloqueo = this.t + n * 240; }
+  abrir() { this.angMano = 0; this.agarrado = false; this.aliviado = true; this.tAbierta = this.t; }
+  ponerModoMuneca(si) { this.modoMuneca = si; this.sentidoGiro = 1; this.tUltimoMov = this.t; this.tic(si ? 2 : 1); }
+  aplicarUmbrales() { this.umbralOn = this.sens * this.maximo; this.umbralOff = Math.max(0.05, this.sens - 0.10) * this.maximo; }
+  puntaje(x) { if (this.fuente === 0) return 10 * Math.min(x[0] - 0.08, x[1] - 0.35); const m = this.mod; let s = m.b; for (let i = 0; i < 5; i++) s += m.w[i] * (x[i] - m.media[i]) / m.escala[i]; return s; }
+  calibrar() { this.emitir('CALI,1'); this.cal = { fase: 1, t0: this.t, s: 0, s2: 0, n: 0, lp: 0, eMax: 0 }; }
+  pasoCal() {
+    const c = this.cal;
+    if (c.fase === 1) {
+      const x = this.muestra(this.t); c.s += x; c.s2 += x * x; c.n++;
+      if (this.t - c.t0 >= 3000) { c.b = c.s / c.n; c.r = Math.sqrt(Math.max(1e-3, c.s2 / c.n - c.b * c.b)); this.emitir('CALI,2'); this.tic(1); c.fase = 2; c.t0 = this.t + 240;
+        this.gestos.push({ ini: c.t0 - 120, dur: 3500, tipo: 'cal', f: u => 0.97 * Math.min(1, u / 220) * (1 + 0.04 * Math.sin(u / 41)) }); }
+    } else if (this.t >= c.t0) {
+      const x = this.muestra(this.t); c.lp += 0.02 * (Math.abs(x - c.b) - c.lp); c.eMax = Math.max(c.eMax, c.lp);
+      if (this.t - c.t0 >= 3000) {
+        this.base = c.b; this.ruido = c.r; const buena = c.eMax > 6 * c.r + 20; this.maximo = buena ? c.eMax : Math.max(c.eMax, 5 * c.r + 10); this.aplicarUmbrales();
+        this.emitir(`CAL,${this.base.toFixed(1)},${this.maximo.toFixed(1)},${this.umbralOn.toFixed(1)},${this.fuente},${buena ? 1 : 0}`);
+        this.cal = null; this.tic(buena ? 2 : 3); this.tUltimaActividad = this.t;
+      }
+    }
+  }
+  paso() {
+    const t = ++this.t, dt = 0.001;
+    if (this.cal) { this.pasoCal(); return; }
+    if (t < this.bloqueo) return;                              // la ESP32 está haciendo un tic
+    this.lp += 0.02 * (Math.abs(this.muestra(t) - this.base) - this.lp); this.env = this.lp;
+    const nivel = clamp((this.env - this.umbralOff) / Math.max(1, this.maximo - this.umbralOff), 0, 1), puedeMover = !this.registro && this.estadoBat < 2;
+    if (!this.activo && this.env > this.umbralOn) {
+      Object.assign(this, { activo: true, seMovio: false, tInicio: t, evPico: 0, evArea: 0, evSuma: 0, evN: 0, evTPico: 0,
+        manoInicio: this.angMano, giroInicio: this.giro, agarradoInicio: this.agarrado, munecaInicio: this.modoMuneca });
+    }
+    if (this.activo) {
+      this.evN++; this.evSuma += this.env; this.evArea += this.env * dt; if (this.env > this.evPico) { this.evPico = this.env; this.evTPico = t - this.tInicio; }
+      this.tUltimaActividad = t; const u = t - this.tInicio;
+      if (u > 90 && puedeMover) {
+        const f = (u < 350 ? 0.35 : 1) * this.vel;
+        if (!this.seMovio) { this.seMovio = true; this.emitir(`LAT,${u}`); }
+        if (this.munecaInicio || this.agarradoInicio) this.giro = clamp(this.giro + this.sentidoGiro * 90 * nivel * f * dt, -77, 77);
+        else { this.angMano = Math.min(80, this.angMano + 140 * nivel * f * dt); if (this.angMano >= 80) this.agarrado = true; this.aliviado = false; }
+        this.tUltimoMov = t;
+      }
+    }
+    if (this.activo && this.env < this.umbralOff) {
+      this.activo = false; const d = t - this.tInicio;
+      const x = [d / 1000, this.evPico / this.maximo, this.evArea / this.maximo, this.evTPico / 1000, this.evN ? (this.evSuma / this.evN) / Math.max(this.evPico, 0.001) : 0];
+      const s = this.puntaje(x), intencion = s > 0; let acc = 'nada';
+      this.emitir(`EV,${d},${x.map(v => v.toFixed(4)).join(',')}`);
+      if (this.registro) acc = 'registro';
+      else if (d <= 350) {
+        this.angMano = this.manoInicio; this.agarrado = this.agarradoInicio; this.giro = this.giroInicio;
+        acc = !intencion ? 'ignorado' : this.munecaInicio ? 'mano' : (this.agarradoInicio || this.manoInicio > 17) ? 'abre' : (this.estadoBat >= 2 ? 'sin_bateria' : 'muneca');
+      } else if (this.munecaInicio || this.agarradoInicio) { this.sentidoGiro = -this.sentidoGiro; acc = this.seMovio ? 'gira' : 'nada'; }
+      else acc = this.angMano > this.manoInicio + 5 ? 'cierra' : 'nada';
+      this.emitir(`DEC,${d},${intencion ? 1 : 0},${s.toFixed(2)},${acc}`);
+      if (acc === 'abre') { this.abrir(); this.uso.aperturas++; } else if (acc === 'muneca') this.ponerModoMuneca(true); else if (acc === 'mano') this.ponerModoMuneca(false);
+      else if (acc === 'ignorado') this.uso.ignorados++; else if (acc === 'cierra') this.uso.cierres++; else if (acc === 'gira') this.uso.giros++;
+      if (this.onEvento) this.onEvento(x, d, acc);
+    }
+    if (!this.activo) {
+      if (this.modoMuneca && t - this.tUltimoMov > 5000) this.ponerModoMuneca(false);
+      if (!this.registro && !this.modoMuneca && !this.agarrado && this.aliviado && this.angMano <= 0.5 && t - this.tAbierta > 3000) this.angMano = 16;
+      if (!this.aliviado && t - this.tUltimoMov > 1500) { this.angMano = clamp(this.angMano - 3, 0, 80); this.aliviado = true; }
+      if (t - this.tUltimaActividad > 2000) { this.umbralOff += 0.0005 * ((this.env + Math.max(0.05, this.sens - 0.10) * this.maximo) - this.umbralOff); this.umbralOn = this.umbralOff + 0.10 * this.maximo; }
+    }
+    if (t % 1000 === 0) this.vBat = Math.max(6.9, this.vBat - 0.00006);
+    if (t - this.tMin >= 60000) { this.tMin = t; this.uso.minutos++; }
+    if (this.stream && t - this.tTel >= 40) {
+      this.tTel = t; const fl = (this.activo ? 1 : 0) | (this.modoMuneca ? 2 : 0) | (this.agarrado ? 4 : 0) | (this.registro ? 8 : 0);
+      this.emitir(`T,${this.env.toFixed(0)},${this.umbralOn.toFixed(0)},${this.umbralOff.toFixed(0)},${this.angMano.toFixed(0)},${this.giro.toFixed(0)},${fl}`);
+      if (t - this.tEst >= 1000) { this.tEst = t; this.emitir(`S,${this.vBat.toFixed(2)},${this.maximo.toFixed(0)},${this.fuente},${this.sens.toFixed(2)},${this.vel.toFixed(2)},185`); }
+    }
+  }
+  avanzar(ms) { for (let i = 0; i < ms; i++) this.paso(); this.gestos = this.gestos.filter(g => this.t < g.ini + g.dur || g === this.manual); }
+  // ---- comandos (como si llegaran por Bluetooth)
+  recibir(txt) { for (const c of txt) this.caracter(c); }
+  caracter(c) {
+    if (c === '\n' || c === '\r') { if (this.linea) { const l = this.linea; this.linea = ''; this.ejecutarLinea(l); } return; }
+    if (!this.linea && 'ack+-<>nmprvuih'.includes(c)) { this.letra(c); return; }
+    this.linea += c;
+  }
+  letra(c) {
+    if ('ac+-<>nmp'.includes(c)) return this.emitir('ERR,la app no mueve la protesis');
+    if (c === 'k') { if (this.agarrado || this.activo) this.emitir('ERR,suelta el objeto antes de calibrar'); else this.calibrar(); }
+    else if (c === 'r') { this.registro = !this.registro; if (this.registro) this.modoMuneca = false; this.emitir(`REG,${this.registro ? 1 : 0}`);
+      if (this.registro) this.emitir(`CAL,${this.base.toFixed(1)},${this.maximo.toFixed(1)},${this.umbralOn.toFixed(1)},${this.fuente},1`); }
+    else if (c === 'v') this.stream = !this.stream;
+    else if (c === 'i') this.info();
+    else if (c === 'u') this.usoTexto();
+  }
+  ejecutarLinea(l) {
+    if (l.length === 1) return this.letra(l);
+    if (l.startsWith('M,')) {
+      const v = l.slice(2).split(',').map(Number);
+      if (v.length !== 20 || v.some(x => !isFinite(x)) || v.slice(5, 10).some(x => !(x > 0))) return this.emitir('ERR,modelo invalido');
+      this.mod = { media: v.slice(0, 5), escala: v.slice(5, 10), w: v.slice(10, 15), b: v[15], n1: v[16], n0: v[17], accM: v[18], accR: v[19] }; this.fuente = 2;
+      this.emitir('OK,modelo'); this.info();
+    } else if (l === 'M0') { this.mod = null; this.fuente = 0; this.emitir('OK,modelo borrado'); this.info(); }
+    else if (l.startsWith('P,')) {
+      const [, nom, val] = l.split(','), x = parseFloat(val);
+      if (nom === 'sens' && isFinite(x)) { this.sens = clamp(x, 0.12, 0.45); this.aplicarUmbrales(); this.emitir(`OK,sens,${this.sens.toFixed(2)}`); }
+      else if (nom === 'vel' && isFinite(x)) { this.vel = clamp(x, 0.5, 1.5); this.emitir(`OK,vel,${this.vel.toFixed(2)}`); }
+      else this.emitir('ERR,ajuste');
+    } else if (l === 'BORRAR_USO') { this.uso = { cierres: 0, aperturas: 0, giros: 0, ignorados: 0, minutos: 0, encendidos: 0 }; this.usoTexto(); }
+    else this.emitir('ERR,comando');
+  }
+  info() { const m = this.mod || { accM: 0, accR: 0, n1: 0, n0: 0 };
+    this.emitir(`INFO,v8 (simulada),${this.fuente},${m.accM},${m.accR},${m.n1},${m.n0},${this.sens.toFixed(2)},${this.vel.toFixed(2)},${this.vBat.toFixed(2)},${this.base.toFixed(1)},${this.maximo.toFixed(1)},${this.umbralOn.toFixed(1)},${this.umbralOff.toFixed(1)}`); }
+  usoTexto() { const u = this.uso; this.emitir(`USO,${u.cierres},${u.aperturas},${u.giros},${u.ignorados},${u.minutos},${u.encendidos}`); }
+}
+
+// ======================================================= el modelo (igual que entrenar_modelo.py)
+const RASGOS = ['duracion_s', 'pico', 'area', 'subida_s', 'forma'];
+const reglaFija = x => x[0] >= 0.08 && x[1] >= 0.35;
+function lda(X, y, lam = 0.05) {
+  const n = X.length, d = 5, media = Array(d).fill(0), escala = Array(d).fill(0);
+  X.forEach(r => r.forEach((v, j) => media[j] += v / n));
+  X.forEach(r => r.forEach((v, j) => escala[j] += (v - media[j]) ** 2 / n));
+  for (let j = 0; j < d; j++) escala[j] = Math.sqrt(escala[j]) + 1e-9;
+  const Z = X.map(r => r.map((v, j) => (v - media[j]) / escala[j]));
+  const prom = c => { const f = Z.filter((_, i) => y[i] === c), m = Array(d).fill(0); f.forEach(r => r.forEach((v, j) => m[j] += v / f.length)); return [m, f]; };
+  const [m1, f1] = prom(1), [m0, f0] = prom(0);
+  const S = Array.from({ length: d }, () => Array(d).fill(0));
+  for (const [f, m] of [[f1, m1], [f0, m0]]) for (const r of f) for (let a = 0; a < d; a++) for (let b = 0; b < d; b++) S[a][b] += (r[a] - m[a]) * (r[b] - m[b]);
+  for (let a = 0; a < d; a++) for (let b = 0; b < d; b++) S[a][b] = S[a][b] / Math.max(1, n - 2) + (a === b ? lam : 0);
+  const w = resolver(S, m1.map((v, j) => v - m0[j])), b = -w.reduce((s, wj, j) => s + wj * (m1[j] + m0[j]) / 2, 0);
+  return { media, escala, w, b };
+}
+function resolver(A, v) {                                      // Gauss con pivoteo para 5 × 5
+  const n = v.length, M = A.map((r, i) => [...r, v[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = 0; r < n; r++) if (r !== c) { const k = M[r][c] / M[c][c]; for (let k2 = c; k2 <= n; k2++) M[r][k2] -= k * M[c][k2]; }
+  }
+  return M.map((r, i) => r[n] / r[i]);
+}
+const puntajeModelo = (m, x) => m.w.reduce((s, wj, j) => s + wj * (x[j] - m.media[j]) / m.escala[j], m.b);
+function analizar(datos, faltan) {
+  const cortos = datos.filter(e => e.x[0] <= T_CORTO && (e.clase === 'corta' || e.clase === 'movimiento'));
+  const X = cortos.map(e => e.x), y = cortos.map(e => e.clase === 'corta' ? 1 : 0);
+  const n1 = y.filter(v => v === 1).length, n0 = y.length - n1;
+  if (n1 < 5 || n0 < 5) return { error: `Muy pocos pulsos para entrenar (${n1} a propósito y ${n0} movimientos). Repite el entrenamiento.` };
+  const modelo = lda(X, y);
+  let okM = 0, okR = 0; const fallos = new Set();
+  X.forEach((x, i) => { const m = lda(X.filter((_, k) => k !== i), y.filter((_, k) => k !== i)); const bien = (puntajeModelo(m, x) > 0) === (y[i] === 1); if (bien) okM++; else fallos.add(cortos[i]); if (reglaFija(x) === (y[i] === 1)) okR++; });
+  const accM = Math.round(100 * okM / y.length), accR = Math.round(100 * okR / y.length);
+  const decide = x => puntajeModelo(modelo, x) > 0;
+  const filas = [['corta', 'Pulso a propósito'], ['movimiento', 'Movimiento sin querer'], ['sostenida', 'Sostenida']].map(([c, nombre]) => {
+    const evs = datos.filter(e => e.clase === c).map(e => e.x), nd = faltan[c] || 0; let r, m;
+    if (c === 'corta') { r = evs.filter(x => x[0] <= T_CORTO && reglaFija(x)).length; m = evs.filter(x => x[0] <= T_CORTO && decide(x)).length; }
+    else if (c === 'movimiento') { r = nd + evs.filter(x => x[0] <= T_CORTO && !reglaFija(x)).length; m = nd + evs.filter(x => x[0] <= T_CORTO && !decide(x)).length; }
+    else r = m = evs.filter(x => x[0] > T_CORTO).length;
+    return { c, nombre, total: evs.length + nd, r, m };
+  });
+  return { modelo, accM, accR, n1, n0, filas, datos, faltan, fallos };
+}
+function lineaModelo(res) {
+  const m = res.modelo, v = [...m.media, ...m.escala, ...m.w, m.b].map(a => a.toFixed(6));
+  return `M,${v.join(',')},${res.n1},${res.n0},${res.accM},${res.accR}\n`;
+}
+function csv(res) {
+  const filas = ['clase,' + RASGOS.join(',')];
+  res.datos.forEach(e => filas.push(e.clase + ',' + e.x.map(v => v.toFixed(4)).join(',')));
+  Object.entries(res.faltan).forEach(([c, k]) => { for (let i = 0; i < k; i++) filas.push(c + ',,,,,'); });
+  return filas.join('\n') + '\n';
+}
+function datosEjemplo() {                                       // 50 gestos con la prótesis simulada, en modo entrenamiento
+  const s = new ProtesisSimulada(() => {}); s.silencio = true; s.calibrar(); s.avanzar(6700); s.registro = true;
+  const datos = [], faltan = {};
+  for (const [clase, n] of [['corta', 20], ['movimiento', 15], ['sostenida', 10]]) for (let i = 0, reg = 0; clase === 'movimiento' ? reg < n && i < 3 * n : i < n; i++) {
+    let ev = null; s.onEvento = (x, d) => { if (!ev) ev = { x, d }; };
+    s.gesto(clase, 150); s.avanzar(2400);
+    if (ev) { datos.push({ clase, x: ev.x, d: ev.d }); reg++; } else faltan[clase] = (faltan[clase] || 0) + 1;
+  }
+  return { datos, faltan };
+}
+
+// ======================================================= estado de la app y protocolo
+const est = { modo: 'sim', env: 0, on: 0, off: 0, mano: 0, giro: 0, fl: 0, bat: 0, max: 100, fuente: 0, sens: 0.25, vel: 1, registro: false, lat: null, info: null, uso: null };
+const traza = [], eventos = [];
+let enlace = null, bufer = '', evPendiente = null, simT0 = 0, resultado = null;
+const entreno = { activo: false, cancelar: false, esperando: null };
+
+function alimentar(texto) { bufer += texto; let i; while ((i = bufer.indexOf('\n')) >= 0) { const l = bufer.slice(0, i); bufer = bufer.slice(i + 1); recibir(l); } if (bufer.length > 4000) bufer = ''; }
+function recibir(l, t = performance.now()) {
+  l = l.trim(); if (!l) return; const p = l.split(',');
+  switch (p[0]) {
+    case 'T': Object.assign(est, { env: +p[1], on: +p[2], off: +p[3], mano: +p[4], giro: +p[5], fl: +p[6] }); est.registro = !!(est.fl & 8);
+      traza.push({ t, env: est.env, on: est.on, off: est.off }); while (traza.length && traza[0].t < t - 10000) traza.shift(); break;
+    case 'S': Object.assign(est, { bat: +p[1], max: +p[2] || est.max, fuente: +p[3], sens: +p[4], vel: +p[5] }); pintarLecturas(); break;
+    case 'EV': evPendiente = { d: +p[1], x: p.slice(2, 7).map(Number) }; if (entreno.esperando && !entreno.esperando.ev) entreno.esperando.ev = evPendiente; break;
+    case 'DEC': { const d = +p[1], e = { t, d, intencion: p[2] === '1', puntaje: +p[3], acc: p[4], x: evPendiente && evPendiente.d === d ? evPendiente.x : null };
+      evPendiente = null; eventos.unshift(e); if (eventos.length > 80) eventos.pop(); pintarEventos(); break; }
+    case 'LAT': est.lat = +p[1]; break;
+    case 'CALI': mostrarCalibracion(+p[1]); break;
+    case 'CAL': if (!$('#calib').hidden) finCalibracion(p); est.max = +p[2] || est.max; break;
+    case 'INFO': est.info = { version: p[1], fuente: +p[2], accM: +p[3], accR: +p[4], n1: +p[5], n0: +p[6], sens: +p[7], vel: +p[8], bat: +p[9], base: +p[10], max: +p[11], on: +p[12], off: +p[13] };
+      Object.assign(est, { fuente: est.info.fuente, sens: est.info.sens, vel: est.info.vel }); if (est.info.max) est.max = est.info.max; pintarLecturas(); pintarAjustes(); break;
+    case 'USO': est.uso = { cierres: +p[1], aperturas: +p[2], giros: +p[3], ignorados: +p[4], minutos: +p[5], encendidos: +p[6] }; guardarHistorial(); pintarUso(); break;
+    case 'BAT': if (p[1] === '2') aviso('Batería baja: la mano ya solo abre. Carga la prótesis.'); else if (p[1] === '1') aviso('Batería baja: carga la prótesis pronto.'); break;
+    case 'REG': est.registro = p[1] === '1'; break;
+    case 'OK': if (p[1] === 'modelo') aviso('Modelo guardado en la prótesis. Ya está activo.'); else if (p[1] === 'modelo borrado') aviso('Modelo borrado: decide la regla fija.'); break;
+    case 'ERR': aviso('La prótesis dice: ' + p.slice(1).join(', ')); break;
+  }
+}
+function enviar(txt) { if (enlace) enlace.enviar(txt.endsWith('\n') ? txt : txt + '\n'); }
+
+// ---- conexiones
+const sim = new ProtesisSimulada(l => recibir(l, simT0 + sim.t));
+const enlaceSim = { tipo: 'sim', nombre: 'Simulación', enviar: txt => sim.recibir(txt), cerrar() {} };
+async function conectarBLE() {
+  if (!navigator.bluetooth) throw Object.assign(new Error('Este navegador no tiene Bluetooth web. Usa Chrome o Edge.'), { sinApi: true });
+  const dev = await navigator.bluetooth.requestDevice({ filters: [{ services: [NUS] }, { namePrefix: 'Hand-e' }], optionalServices: [NUS] });
+  const gatt = await dev.gatt.connect(), srv = await gatt.getPrimaryService(NUS);
+  const rx = await srv.getCharacteristic(NUS_RX), tx = await srv.getCharacteristic(NUS_TX), dec = new TextDecoder();
+  tx.addEventListener('characteristicvaluechanged', e => alimentar(dec.decode(e.target.value, { stream: true })));
+  await tx.startNotifications();
+  let cola = Promise.resolve(), cerrado = false;
+  dev.addEventListener('gattserverdisconnected', () => { if (!cerrado) desconectado('Se perdió la conexión Bluetooth con la prótesis.'); });
+  return { tipo: 'ble', nombre: dev.name || 'Hand-e', enviar(txt) { const b = enc.encode(txt);
+      for (let i = 0; i < b.length; i += 20) { const trozo = b.slice(i, i + 20); cola = cola.then(() => rx.writeValueWithResponse ? rx.writeValueWithResponse(trozo) : rx.writeValue(trozo)).catch(() => {}); } },
+    cerrar() { cerrado = true; try { dev.gatt.disconnect(); } catch (e) {} } };
+}
+async function conectarUSB() {
+  if (!navigator.serial) throw Object.assign(new Error('Este navegador no tiene puerto serie web. Usa Chrome o Edge en computadora.'), { sinApi: true });
+  const port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 });
+  const writer = port.writable.getWriter(); let vivo = true, lector = null;
+  (async () => { const dec = new TextDecoder();
+    while (port.readable && vivo) { lector = port.readable.getReader();
+      try { for (;;) { const { value, done } = await lector.read(); if (done) break; alimentar(dec.decode(value, { stream: true })); } } catch (e) { break; } finally { lector.releaseLock(); } }
+    if (vivo) desconectado('Se desconectó el cable USB.'); })();
+  return { tipo: 'usb', nombre: 'USB', enviar(txt) { writer.write(enc.encode(txt)).catch(() => {}); },
+    async cerrar() { vivo = false; try { await lector?.cancel(); } catch (e) {} try { writer.releaseLock(); await port.close(); } catch (e) {} } };
+}
+async function usar(tipo) {
+  $('#panelConexion').hidden = true; $('#btnConectar').setAttribute('aria-expanded', 'false');
+  if (tipo === 'sim') return iniciarSim();
+  try {
+    const nuevo = tipo === 'ble' ? await conectarBLE() : await conectarUSB();
+    if (enlace && enlace !== enlaceSim) await enlace.cerrar();
+    enlace = nuevo; est.modo = tipo; reloj = () => performance.now(); traza.length = 0; eventos.length = 0; est.uso = null; est.info = null; pintarEventos();
+    pintarConexion(); aviso(`Conectada por ${tipo === 'ble' ? 'Bluetooth' : 'USB'}.`);
+    await dormir(700); if (!traza.length) enviar('v');           // pide los datos en vivo si aún no llegan
+    enviar('i'); await dormir(150); enviar('u');
+  } catch (e) {
+    if (e.name === 'NotFoundError') return aviso('No elegiste ningún dispositivo.');
+    const nota = $('#notaApi'); nota.hidden = false;
+    nota.innerHTML = (e.sinApi ? e.message : 'Este visor no deja usar Bluetooth ni USB.') + ` Abre <a href="${SITIO}" target="_blank" rel="noopener">Hand-e Studio en el sitio</a> en Chrome o Edge para conectar la prótesis.`;
+    $('#panelConexion').hidden = false;
+  }
+}
+function desconectado(msg) { if (est.modo === 'sim') return; enlace = null; est.modo = 'desconectada'; pintarConexion(); aviso(msg + ' Toca Conectar para volver a enlazarla.'); }
+function iniciarSim() {
+  if (enlace && enlace !== enlaceSim) enlace.cerrar();
+  enlace = enlaceSim; est.modo = 'sim'; traza.length = 0; eventos.length = 0; est.lat = null; reloj = () => sim.t;
+  sim.stream = true; simT0 = performance.now() - sim.t; enviar('i'); enviar('u'); pintarConexion(); pintarEventos();
+}
+
+// ---- demostración automática (solo simulación): gestos según lo que está haciendo la mano
+const demo = { proximo: 0, n: 0, girado: false, giroModo: false, ciclo: 0 };
+function autoDemo() {
+  if (est.modo !== 'sim' || !$('#chkAuto').checked || entreno.activo || sim.manual || sim.ocupado() || sim.t < demo.proximo) return;
+  let tipo, txt, op = {};
+  if (demo.n++ % 3 === 2) { tipo = 'movimiento'; txt = 'Adrián mueve el brazo sin querer'; }
+  else if (sim.modoMuneca) { if (!demo.giroModo) { tipo = 'sostenida'; op = { D: 900, A: 0.8 }; txt = 'Aprieta y sostiene: la muñeca gira'; demo.giroModo = true; } else { tipo = 'corta'; txt = 'Pulso corto: vuelve a la mano'; demo.giroModo = false; } }
+  else if (sim.agarrado) { if (!demo.girado) { tipo = 'sostenida'; op = { D: 800, A: 0.8 }; txt = 'Con el objeto agarrado, aprieta: gira sin soltar'; demo.girado = true; } else { tipo = 'corta'; txt = 'Pulso corto: la mano abre'; demo.girado = false; } }
+  else if (sim.angMano > 17) { tipo = 'sostenida'; op = { D: 1000, A: 0.9 }; txt = 'Aprieta y sostiene: termina de cerrar'; }
+  else if (demo.ciclo++ % 2 === 0) { tipo = 'sostenida'; op = { D: 1300, A: 0.92 }; txt = 'Aprieta y sostiene: la mano cierra'; }
+  else { tipo = 'corta'; txt = 'Pulso corto con la mano abierta: modo muñeca'; demo.giroModo = false; }
+  sim.gesto(tipo, 200, op); $('#demoTexto').textContent = txt; demo.proximo = sim.t + 2700 + rnd(0, 900);
+}
+
+// ======================================================= dibujo
+let col = {};
+function leerColores() { const cs = getComputedStyle(document.documentElement), g = k => cs.getPropertyValue(k).trim();
+  col = { traza: g('--traza'), umbral: g('--umbral'), linea: g('--linea'), gris: g('--gris'), tinta: g('--tinta'), acento: g('--acento'), acentoS: g('--acento-suave'), aviso: g('--aviso'), avisoS: g('--aviso-suave'), sos: g('--sostenida'), bienS: g('--bien-suave'), bien: g('--bien') }; }
+function ajustarCanvas() { const cv = $('#cvTraza'), dpr = window.devicePixelRatio || 1; cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); }
+const NOMBRES = { abre: 'Abre', muneca: 'Modo muñeca', mano: 'Vuelve a la mano', ignorado: 'Ignorado', cierra: 'Cierra', gira: 'Gira', sin_bateria: 'Sin batería', registro: 'Entrenamiento', nada: '' };
+function dibujar(ahora) {
+  const cv = $('#cvTraza'); if (!cv.width) return; const c = cv.getContext('2d'), dpr = window.devicePixelRatio || 1, W = cv.width, H = cv.height;
+  c.clearRect(0, 0, W, H);
+  const iz = 44 * dpr, de = 6 * dpr, ar = 18 * dpr, ab = 22 * dpr, w = W - iz - de, h = H - ar - ab, ventana = 8000, t0 = ahora - ventana, m = Math.max(1, est.max);
+  const X = t => iz + (t - t0) / ventana * w, Y = pct => ar + h - clamp(pct, 0, 125) / 125 * h;
+  c.font = `${11 * dpr}px Inter, system-ui, sans-serif`; c.lineWidth = dpr; c.textBaseline = 'middle';
+  for (const g of [0, 25, 50, 75, 100]) { const y = Math.round(Y(g)) + 0.5; c.strokeStyle = col.linea; c.beginPath(); c.moveTo(iz, y); c.lineTo(W - de, y); c.stroke(); c.fillStyle = col.gris; c.fillText(g + ' %', 2 * dpr, y); }
+  c.textBaseline = 'alphabetic';
+  for (let s = 0; s <= 8; s += 2) { const x = X(ahora - s * 1000); c.fillStyle = col.gris; c.textAlign = s === 0 ? 'right' : 'center'; c.fillText(s === 0 ? 'ahora' : `−${s} s`, x, H - 5 * dpr); }
+  c.textAlign = 'left';
+  for (const e of eventos) {                                  // franjas de cada contracción
+    if (e.t < t0) break; const xa = Math.max(iz, X(e.t - e.d)), xb = X(e.t);
+    const tono = e.acc === 'ignorado' ? [col.avisoS, col.aviso] : e.acc === 'registro' ? [col.bienS, col.bien] : e.d <= 350 && e.intencion ? [col.acentoS, col.acento] : [col.sos, col.gris];
+    c.fillStyle = tono[0]; c.fillRect(xa, ar, Math.max(2, xb - xa), h);
+    const et = NOMBRES[e.acc] || ''; if (et && xb - 4 * dpr > iz) { c.fillStyle = tono[1]; c.font = `500 ${11 * dpr}px Inter, system-ui, sans-serif`; c.fillText(et, Math.max(iz + 2 * dpr, xa + 3 * dpr), ar - 5 * dpr); c.font = `${11 * dpr}px Inter, system-ui, sans-serif`; }
+  }
+  const pts = traza.filter(p => p.t >= t0 - 100); if (pts.length < 2) return;
+  c.setLineDash([5 * dpr, 4 * dpr]); c.strokeStyle = col.umbral; c.lineWidth = 1.2 * dpr;
+  for (const k of ['on', 'off']) { c.beginPath(); pts.forEach((p, i) => { const x = X(p.t), y = Y(p[k] / m * 100); i ? c.lineTo(x, y) : c.moveTo(x, y); }); c.stroke(); }
+  c.setLineDash([]);
+  c.beginPath(); pts.forEach((p, i) => { const x = X(p.t), y = Y(p.env / m * 100); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+  c.strokeStyle = col.traza; c.lineWidth = 2 * dpr; c.lineJoin = 'round'; c.stroke();
+  c.lineTo(X(pts[pts.length - 1].t), Y(0)); c.lineTo(X(pts[0].t), Y(0)); c.closePath(); c.globalAlpha = 0.10; c.fillStyle = col.traza; c.fill(); c.globalAlpha = 1;
+  const u = pts[pts.length - 1]; c.beginPath(); c.arc(X(u.t), Y(u.env / m * 100), 3.5 * dpr, 0, Math.PI * 2); c.fillStyle = col.traza; c.fill();
+}
+function pintarLecturas() {
+  const ag = !!(est.fl & 4), mm = !!(est.fl & 2);
+  $('#rMano').textContent = ag ? 'Agarrando' : est.mano > 17 ? 'A medio cerrar' : est.mano > 1 ? 'Reposo natural' : 'Abierta';
+  $('#barDedos').style.width = clamp(est.mano / 80 * 100, 0, 100) + '%'; $('#rManoDet').textContent = `Dedos a ${Math.round(est.mano)}° de 80°`;
+  $('#aguja').style.transform = `rotate(${clamp(est.giro, -80, 80)}deg)`;
+  $('#rMunecaDet').textContent = `${est.giro > 0 ? '+' : ''}${Math.round(est.giro)}° · ${Math.abs(est.giro) < 3 ? 'pulgar arriba' : est.giro > 0 ? 'hacia la palma abajo' : 'hacia la palma arriba'}`;
+  $('#rModo').textContent = est.registro ? 'Entrenando' : mm ? 'Muñeca' : 'Mano';
+  const inf = est.info, sim_ = est.modo === 'sim';
+  if (est.fuente === 2) { $('#rModelo').textContent = 'Modelo entrenado'; $('#rModeloDet').textContent = inf && inf.n1 ? `${inf.n1} pulsos y ${inf.n0} movimientos · ${inf.accM} % contra ${inf.accR} % de la regla${sim_ ? ' (simulación)' : ''}` : 'Guardado en la prótesis'; }
+  else if (est.fuente === 1) { $('#rModelo').textContent = 'Modelo de archivo'; $('#rModeloDet').textContent = 'modelo_emg.h dentro del programa'; }
+  else { $('#rModelo').textContent = 'Regla fija'; $('#rModeloDet').textContent = 'Al menos 80 ms y 35 % de su fuerza. Entrena para mejorarla.'; }
+  $('#rBat').textContent = est.bat > 3 ? `${est.bat.toFixed(2)} V` : 'Por USB';
+  $('#rLat').textContent = est.lat ? `El motor arranca a los ${est.lat} ms de detectar` : 'El motor arranca a los 90 ms de detectar';
+}
+function hora(t) { const d = new Date(Date.now() - (performance.now() - t)); return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+const ACC_TEXTO = { abre: 'Abrió la mano', muneca: 'Entró al modo muñeca', mano: 'Volvió al modo mano', ignorado: 'No hizo nada: movimiento sin querer', cierra: 'Cerró la mano', gira: 'Giró la muñeca', sin_bateria: 'No giró: batería baja', registro: 'Guardada para entrenar', nada: 'Sin cambio' };
+function pintarEventos() {
+  const ol = $('#listaEventos');
+  if (!eventos.length) { ol.innerHTML = '<li class="vacio">Aún no hay contracciones.</li>'; return; }
+  ol.innerHTML = eventos.slice(0, 40).map(e => {
+    const chip = e.acc === 'registro' ? '<span class="chip reg">Entrenamiento</span>' : e.d > 350 ? '<span class="chip sos">Sostenida</span>' : e.intencion ? '<span class="chip prop">A propósito</span>' : '<span class="chip ign">Sin querer</span>';
+    const pico = e.x ? ` · pico ${Math.round(e.x[1] * 100)} %` : '';
+    return `<li><span class="hora">${hora(e.t)}</span>${chip}<span>${ACC_TEXTO[e.acc] || e.acc}</span><span class="dat">${e.d} ms${pico}</span></li>`;
+  }).join('');
+}
+function pintarConexion() {
+  const chip = $('#chipConexion'), sim_ = est.modo === 'sim';
+  chip.className = 'chip-estado ' + (sim_ ? 'sim' : est.modo === 'desconectada' ? '' : 'vivo');
+  $('#chipTexto').textContent = sim_ ? 'Simulación' : est.modo === 'desconectada' ? 'Desconectada' : enlace ? `${enlace.nombre} · ${est.modo === 'ble' ? 'Bluetooth' : 'USB'}` : '';
+  $('#avisoSim').hidden = !sim_; $('#simControles').hidden = !sim_; $('#demoFila').hidden = !sim_; $('#filaAutoEntreno').hidden = !sim_;
+  pintarUso(); pintarResultados();
+}
+// ---- calibración
+let calTimer = null;
+function mostrarCalibracion(fase) {
+  const caja = $('#calib'); caja.hidden = false; clearInterval(calTimer); const t0 = performance.now(), barra = fase === 1 ? $('#calB1') : $('#calB2');
+  if (fase === 1) { $('#calB1').style.width = '0'; $('#calB2').style.width = '0'; $('#calTitulo').textContent = 'Relaja el brazo'; $('#calTexto').textContent = 'Midiendo el reposo de hoy · 3 s'; }
+  else { $('#calB1').style.width = '100%'; $('#calTitulo').textContent = 'Aprieta fuerte'; $('#calTexto').textContent = 'La muñeca hizo un tic: aprieta 3 s'; }
+  calTimer = setInterval(() => { barra.style.width = clamp((performance.now() - t0) / 3000 * 100, 0, 100) + '%'; }, 50);
+}
+function finCalibracion(p) {
+  clearInterval(calTimer); $('#calB2').style.width = '100%';
+  const buena = p[5] !== '0'; $('#calTitulo').textContent = buena ? 'Lista' : 'Revisa el electrodo';
+  $('#calTexto').textContent = buena ? `Su fuerza máxima de hoy: ${Math.round(+p[2])} mV · se enciende a ${Math.round(+p[3])} mV` : 'No se notó la contracción. Usa la última calibración buena.';
+  setTimeout(() => { $('#calib').hidden = true; }, buena ? 1800 : 3500);
+}
+// ---- entrenar
+const PLANES = { rapido: [['corta', 10], ['movimiento', 8], ['sostenida', 5]], completo: [['corta', 20], ['movimiento', 15], ['sostenida', 10]] };
+const INSTRUCCION = { corta: ['Pulso corto', 'Haz un pulso corto a propósito'], movimiento: ['Movimiento', 'Mueve el brazo de golpe sin apretar: levántalo rápido o da un golpecito al socket'], sostenida: ['Sostenida', 'Aprieta y sostén un segundo'] };
+async function entrenar() {
+  if (!enlace) return aviso('Conecta la prótesis o usa la simulación para entrenar.');
+  const plan = PLANES[$('#planCompleto').checked ? 'completo' : 'rapido'], total = plan.reduce((s, p) => s + p[1], 0), sim_ = est.modo === 'sim';
+  Object.assign(entreno, { activo: true, cancelar: false, esperando: null });
+  $('#btnEntrenar').hidden = true; $('#btnCancelar').hidden = false; $('#prompt').hidden = false;
+  if (!est.registro) { enviar('r'); await esperarA(() => est.registro, 2500); }
+  if (!est.registro) { aviso('La prótesis no entró al modo de entrenamiento. Revisa la conexión.'); return terminarEntreno(); }
+  const datos = [], faltan = {}, modo0 = est.modo; let k = 0;
+  // los movimientos que ni activan el sensor están bien, pero no enseñan: se repiten hasta registrar n (máximo 3n intentos)
+  fuera: for (const [clase, n] of plan) for (let i = 0, reg = 0; clase === 'movimiento' ? reg < n && i < 3 * n : i < n; i++) {
+    if (entreno.cancelar || est.modo !== modo0) break fuera;
+    const [etq, que] = INSTRUCCION[clase]; k = Math.min(total, k + (clase !== 'movimiento' || i < n ? 1 : 0));
+    $('#pPaso').textContent = clase === 'movimiento' ? `${etq} · ${reg} de ${n} registrados · intento ${i + 1}` : `${etq} · ${i + 1} de ${n}`; $('#pQue').textContent = que; $('#pEstado').textContent = 'Prepárate…'; $('#pEstado').className = 'estado-p'; $('#pAvance').style.width = (100 * (k - 1) / total) + '%';
+    await pausa(sim_ ? 900 : 1500); if (entreno.cancelar || est.modo !== modo0) break fuera;
+    $('#pEstado').textContent = 'Ahora'; $('#pEstado').className = 'estado-p ahora'; entreno.esperando = { clase, ev: null };
+    if (sim_ && $('#chkAutoEntreno').checked) sim.gesto(clase, rnd(120, 600));
+    const ev = await esperarA(() => entreno.esperando.ev, sim_ ? 2600 : 4000); entreno.esperando = null;
+    if (ev) { datos.push({ clase, x: ev.x, d: ev.d }); reg++; $('#pEstado').textContent = `Registrada: ${ev.d} ms, pico ${Math.round(ev.x[1] * 100)} %`; }
+    else { faltan[clase] = (faltan[clase] || 0) + 1; $('#pEstado').textContent = clase === 'movimiento' ? 'Sin contracción: bien, no se activó' : 'No se notó la contracción'; }
+    $('#pEstado').className = 'estado-p'; await pausa(450);
+  }
+  const cancelado = entreno.cancelar || est.modo !== modo0; await terminarEntreno();
+  if (cancelado) return aviso('Entrenamiento cancelado. No se guardó nada.');
+  const res = analizar(datos, faltan); if (res.error) return aviso(res.error);
+  res.origen = sim_ ? 'sim' : 'real'; resultado = res; pintarResultados(); aviso('Listo. Revisa los resultados y guárdalo en la prótesis.');
+}
+async function terminarEntreno() { if (est.registro) { enviar('r'); await esperarA(() => !est.registro, 1500); } entreno.activo = false; entreno.esperando = null; $('#btnEntrenar').hidden = false; $('#btnCancelar').hidden = true; $('#prompt').hidden = true; }
+function pintarResultados() {
+  const r = resultado; if (!r) return;
+  $('#rOrigen').textContent = r.origen === 'ejemplo' ? 'Ejemplo con la simulación' : r.origen === 'sim' ? 'Tu entrenamiento en la simulación' : 'Entrenamiento con la prótesis';
+  $('#rOrigen').className = 'chip etiqueta-origen ' + (r.origen === 'real' ? 'reg' : 'ign');
+  $('#kModelo').textContent = r.accM + ' %'; $('#kRegla').textContent = r.accR + ' %'; $('#kModeloDet').textContent = `aciertos en ${r.n1 + r.n0} pulsos, sin haberlos visto`;
+  $('#tablaClases').innerHTML = r.filas.map(f => `<tr><td>${f.nombre}</td><td class="n">${f.total}</td><td class="n">${f.r} bien</td><td class="n">${f.m} bien</td></tr>`).join('');
+  const puede = (r.origen === 'real') === (est.modo === 'ble' || est.modo === 'usb') && !!enlace;
+  const b = $('#btnGuardarModelo'); b.disabled = !puede;
+  b.title = puede ? '' : r.origen === 'real' ? 'Conecta la prótesis con la que entrenaste' : 'Este modelo es de la simulación: entrena con la prótesis conectada para guardarlo en ella';
+  dibujarDispersion(r);
+}
+function dibujarDispersion(r) {
+  const W = 560, H = 300, iz = 46, de = 12, ar = 14, ab = 38, xmax = Math.max(1600, ...r.datos.map(e => e.x[0] * 1000)) * 1.02;
+  const X = ms => iz + Math.sqrt(clamp(ms, 0, xmax) / xmax) * (W - iz - de), Y = p => ar + (H - ar - ab) * (1 - clamp(p, 0, 110) / 110);   // raíz: separa los pulsos cortos
+  let s = '';
+  for (const p of [0, 25, 50, 75, 100]) s += `<line class="eje" x1="${iz}" x2="${W - de}" y1="${Y(p)}" y2="${Y(p)}"/><text x="${iz - 6}" y="${Y(p) + 4}" text-anchor="end">${p} %</text>`;
+  for (const ms of [50, 100, 200, 500, 1000, 1500, 2500, 4000].filter(v => v <= xmax)) s += `<text x="${X(ms)}" y="${H - 18}" text-anchor="middle">${ms}</text>`;
+  s += `<text x="${(iz + W) / 2}" y="${H - 2}" text-anchor="middle">duración de la contracción (ms, escala de raíz)</text>`;
+  s += `<line class="lim" x1="${X(350)}" x2="${X(350)}" y1="${ar}" y2="${H - ab}"/><text x="${X(350) + 4}" y="${ar + 10}">pulso: menos de 350 ms</text>`;
+  s += `<line class="regla" x1="${iz}" x2="${W - de}" y1="${Y(35)}" y2="${Y(35)}"/><text x="${W - de}" y="${Y(35) - 5}" text-anchor="end">regla fija: 35 %</text>`;
+  for (const e of r.datos) { const cx = X(e.x[0] * 1000), cy = Y(e.x[1] * 100), cl = e.clase === 'corta' ? 'c1' : e.clase === 'movimiento' ? 'c0' : 'c2';
+    s += `<circle class="${cl}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.2" opacity=".85"/>`; if (r.fallos.has(e)) s += `<circle class="error" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="8"/>`; }
+  $('#dispersion').innerHTML = s;
+}
+// ---- uso
+function historialEjemplo() { const h = [], hoy = new Date(); let c = 300, a = 290, g = 40, ig = 15, mi = 900;
+  for (let i = 6; i >= 0; i--) { const d = new Date(hoy - i * 864e5); c += Math.round(rnd(12, 34)); a += Math.round(rnd(11, 32)); g += Math.round(rnd(2, 9)); ig += Math.round(rnd(1, 4)); mi += Math.round(rnd(150, 300));
+    h.push({ fecha: d.toISOString().slice(0, 10), cierres: c, aperturas: a, giros: g, ignorados: ig, minutos: mi }); } return h; }
+const HIST_EJEMPLO = historialEjemplo();
+function guardarHistorial() { if (est.modo !== 'ble' && est.modo !== 'usb') return; const h = guardado.get('hande-uso', []), hoy = new Date().toISOString().slice(0, 10), u = est.uso;
+  const fila = { fecha: hoy, cierres: u.cierres, aperturas: u.aperturas, giros: u.giros, ignorados: u.ignorados, minutos: u.minutos };
+  if (h.length && h[h.length - 1].fecha === hoy) h[h.length - 1] = fila; else h.push(fila); guardado.set('hande-uso', h.slice(-60)); }
+function pintarUso() {
+  const sim_ = est.modo === 'sim', u = est.uso; $('#usoOrigen').hidden = !sim_;
+  const kp = u ? [['Horas encendida', (u.minutos / 60).toFixed(1)], ['Agarres', u.cierres], ['Aperturas', u.aperturas], ['Giros de muñeca', u.giros], ['Movimientos ignorados', u.ignorados], ['Encendidos', u.encendidos]]
+               : [['Horas encendida', '—'], ['Agarres', '—'], ['Aperturas', '—'], ['Giros de muñeca', '—'], ['Movimientos ignorados', '—'], ['Encendidos', '—']];
+  $('#kpisUso').innerHTML = kp.map(([e, v]) => `<div><p class="eti">${e}</p><p class="valor num">${v}</p></div>`).join('');
+  const h = sim_ ? HIST_EJEMPLO : guardado.get('hande-uso', []), W = 560, H = 190, iz = 34, ab = 24, ar = 10;
+  const deltas = h.slice(1).map((f, i) => ({ fecha: f.fecha, v: Math.max(0, (f.cierres + f.aperturas + f.giros) - (h[i].cierres + h[i].aperturas + h[i].giros)) }));
+  if (!deltas.length) { $('#barrasUso').innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">Conecta la app otro día para ver la tendencia.</text>`; $('#usoNota').textContent = 'La app guarda una foto del contador cada día que se conecta, solo en este navegador.'; return; }
+  const max = Math.max(10, ...deltas.map(d => d.v)) * 1.15, bw = (W - iz - 8) / deltas.length;
+  let s = ''; for (const p of [0, 0.5, 1]) { const y = ar + (H - ar - ab) * (1 - p); s += `<line x1="${iz}" x2="${W - 4}" y1="${y}" y2="${y}"/><text x="${iz - 6}" y="${y + 4}" text-anchor="end">${Math.round(max * p)}</text>`; }
+  deltas.forEach((d, i) => { const hgt = (H - ar - ab) * d.v / max, x = iz + i * bw + bw * 0.2;
+    s += `<rect class="${i === deltas.length - 1 ? 'hoy' : ''}" x="${x.toFixed(1)}" y="${(H - ab - hgt).toFixed(1)}" width="${(bw * 0.6).toFixed(1)}" height="${hgt.toFixed(1)}" rx="3"/>`;
+    s += `<text x="${(x + bw * 0.3).toFixed(1)}" y="${H - 6}" text-anchor="middle">${d.fecha.slice(8)}/${d.fecha.slice(5, 7)}</text>`; });
+  $('#barrasUso').innerHTML = s;
+  $('#usoNota').textContent = sim_ ? 'Ejemplo: siete días inventados para mostrar cómo se ve. Con la prótesis conectada aparecen sus datos reales.' : 'Agarres + aperturas + giros de cada día, según las fotos que guardó esta app.';
+}
+// ---- ajustes
+function pintarAjustes() {
+  const i = est.info; if (!i) return;
+  $('#rangoSens').value = Math.round(i.sens * 100); $('#vSens').textContent = `${Math.round(i.sens * 100)} % de su fuerza`;
+  $('#rangoVel').value = Math.round(i.vel * 100); $('#vVel').textContent = `${Math.round(i.vel * 100)} %`;
+  const fuente = i.fuente === 2 ? `Entrenado (${i.n1} pulsos, ${i.n0} movimientos): ${i.accM} % contra ${i.accR} %` : i.fuente === 1 ? 'Archivo modelo_emg.h' : 'Regla fija (80 ms y 35 %)';
+  $('#tablaInfo').innerHTML = [['Programa', i.version], ['Decide los pulsos', fuente], ['Reposo (base)', `${i.base} mV`], ['Fuerza máxima de hoy', `${i.max} mV`], ['Se enciende / se apaga', `${Math.round(i.on)} / ${Math.round(i.off)} mV`],
+    ['Batería', i.bat > 3 ? `${i.bat.toFixed(2)} V` : 'Por USB']].map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+}
+let tAjuste = null;
+function ajustar(nom, v) { clearTimeout(tAjuste); tAjuste = setTimeout(() => { enviar(`P,${nom},${v.toFixed(2)}`); setTimeout(() => enviar('i'), 250); }, 250); }
+function confirmarDoble(btn, texto, accion) { if (btn.dataset.armado) { delete btn.dataset.armado; btn.textContent = btn.dataset.orig; accion(); return; }
+  btn.dataset.orig = btn.textContent; btn.dataset.armado = '1'; btn.textContent = texto; setTimeout(() => { if (btn.dataset.armado) { delete btn.dataset.armado; btn.textContent = btn.dataset.orig; } }, 3500); }
+// ---- avisos, tema y pestañas
+let tToast = null;
+function aviso(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(tToast); tToast = setTimeout(() => { t.hidden = true; }, 4200); }
+function aplicarTema(tema) { if (tema) document.documentElement.setAttribute('data-theme', tema); else document.documentElement.removeAttribute('data-theme'); leerColores(); if (resultado) dibujarDispersion(resultado); }
+function vista() { const v = (location.hash || '#vivo').slice(1), ok = ['vivo', 'entrenar', 'uso', 'ajustes'].includes(v) ? v : 'vivo';
+  $$('.vista').forEach(s => { s.hidden = s.id !== 'v-' + ok; }); $$('nav.pestanas a').forEach(a => a.classList.toggle('activo', a.dataset.vista === ok));
+  if (ok === 'vivo') requestAnimationFrame(ajustarCanvas); if (ok === 'uso' && enlace) enviar('u'); }
+
+// ======================================================= arranque
+window.handeStudio = { get estado() { return est; }, get simulada() { return sim; } };   // para revisar desde la consola
+function avanzarSim() {                                         // la prótesis simulada corre en tiempo real aunque la pestaña no se vea
+  if (est.modo !== 'sim') return; const ahora = performance.now(), falta = Math.round(ahora - (simT0 + sim.t));
+  if (falta > 0) { sim.avanzar(Math.min(falta, 1000)); if (falta > 1000) simT0 = ahora - sim.t; } autoDemo();
+}
+function bucle(ahora) {
+  avanzarSim();
+  if (!$('#v-vivo').hidden) { dibujar(est.modo === 'sim' ? simT0 + sim.t : ahora); pintarLecturas(); }
+  requestAnimationFrame(bucle);
+}
+function iniciar() {
+  aplicarTema(guardado.get('hande-tema', null));
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { leerColores(); if (resultado) dibujarDispersion(resultado); });
+  // la prótesis simulada ya calibrada y con unos segundos de historia: la página abre trabajando
+  sim.silencio = true; sim.calibrar(); sim.avanzar(6700); sim.silencio = false;
+  enlace = enlaceSim; reloj = () => sim.t; sim.stream = true; const ahora = performance.now(); simT0 = ahora - sim.t - 9000;
+  for (let i = 0; i < 450; i++) { autoDemo(); sim.avanzar(20); }
+  simT0 = ahora - sim.t; enviar('i'); enviar('u');
+  const ej = datosEjemplo(); resultado = analizar(ej.datos, ej.faltan); if (resultado.error) resultado = null; else resultado.origen = 'ejemplo';
+  pintarConexion(); pintarEventos(); pintarLecturas(); pintarAjustes(); vista();
+  if (window.top === window.self) $('#btnDescargarCSV').hidden = false;
+  new ResizeObserver(ajustarCanvas).observe($('#cvTraza')); ajustarCanvas();
+  setInterval(avanzarSim, 40); requestAnimationFrame(bucle);
+}
+// ---- eventos de la interfaz
+window.addEventListener('hashchange', vista);
+$('#btnConectar').addEventListener('click', () => { const p = $('#panelConexion'); p.hidden = !p.hidden; $('#btnConectar').setAttribute('aria-expanded', String(!p.hidden)); $('#notaApi').hidden = true; });
+document.addEventListener('click', e => { const p = $('#panelConexion'); if (!p.hidden && !p.contains(e.target) && e.target !== $('#btnConectar')) { p.hidden = true; $('#btnConectar').setAttribute('aria-expanded', 'false'); } });
+$('#cBLE').addEventListener('click', () => usar('ble')); $('#cUSB').addEventListener('click', () => usar('usb')); $('#cSIM').addEventListener('click', () => usar('sim'));
+$('#btnTema').addEventListener('click', () => { const oscuro = document.documentElement.getAttribute('data-theme') ? document.documentElement.getAttribute('data-theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  const nuevo = oscuro ? 'light' : 'dark'; guardado.set('hande-tema', nuevo); aplicarTema(nuevo); });
+const bS = $('#bSostener');
+bS.addEventListener('pointerdown', e => { e.preventDefault(); bS.setPointerCapture?.(e.pointerId); sim.apretar(); $('#demoTexto').textContent = 'Tú controlas: aprieta y sostén'; demo.proximo = sim.t + 4000; });
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) bS.addEventListener(ev, () => sim.soltar());
+$('#bPulso').addEventListener('click', () => { sim.gesto('corta', 20); $('#demoTexto').textContent = 'Tú controlas: pulso corto'; demo.proximo = sim.t + 4000; });
+$('#bMover').addEventListener('click', () => { sim.gesto('movimiento', 20); $('#demoTexto').textContent = 'Tú controlas: movimiento sin querer'; demo.proximo = sim.t + 4000; });
+document.addEventListener('keydown', e => { if (e.code !== 'Space' || e.repeat || est.modo !== 'sim' || $('#v-vivo').hidden || /INPUT|BUTTON|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return; e.preventDefault(); sim.apretar(); demo.proximo = sim.t + 4000; });
+document.addEventListener('keyup', e => { if (e.code === 'Space') sim.soltar(); });
+$('#btnEntrenar').addEventListener('click', entrenar);
+$('#btnCancelar').addEventListener('click', () => { entreno.cancelar = true; });
+$('#btnGuardarModelo').addEventListener('click', () => { if (resultado && enlace) { enviar(lineaModelo(resultado)); setTimeout(() => enviar('i'), 400); } });
+$('#btnCopiarCSV').addEventListener('click', async () => { if (!resultado) return; const txt = csv(resultado);
+  try { await navigator.clipboard.writeText(txt); aviso('Datos copiados. Pégalos en un archivo .csv para entrenar_modelo.py.'); } catch (e) { aviso('No se pudo copiar automáticamente en este visor.'); } });
+$('#btnDescargarCSV').addEventListener('click', () => { if (!resultado) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv(resultado)], { type: 'text/csv' }));
+  a.download = `datos_hande_${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); });
+$('#rangoSens').addEventListener('input', e => { const v = +e.target.value; $('#vSens').textContent = `${v} % de su fuerza`; ajustar('sens', v / 100); });
+$('#rangoVel').addEventListener('input', e => { const v = +e.target.value; $('#vVel').textContent = `${v} %`; ajustar('vel', v / 100); });
+$('#btnCalibrar').addEventListener('click', () => { if (!enlace) return aviso('Conecta la prótesis primero.'); location.hash = '#vivo'; enviar('k'); });
+$('#btnBorrarModelo').addEventListener('click', e => confirmarDoble(e.currentTarget, 'Toca otra vez para borrar', () => enviar('M0')));
+$('#btnBorrarUso').addEventListener('click', e => confirmarDoble(e.currentTarget, 'Toca otra vez para borrar', () => enviar('BORRAR_USO')));
+iniciar();
+})();
+</script>
+</body>
+</html>
