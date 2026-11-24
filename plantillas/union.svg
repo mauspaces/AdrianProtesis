@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="Inter, Arial, sans-serif" role="img" aria-label="Cómo se une una articulación: el tornillo entra por el avellanado, pasa libre por la pieza que gira y se rosca en la placa de enfrente">
+<rect width="900" height="420" fill="#fafafa"/>
+<text x="24" y="34" font-size="20" font-weight="700">Así se une CUALQUIER articulación de los dedos</text>
+<text x="24" y="58" font-size="13" fill="#555">Bisagras entre falanges y puntas de las bielitas: siempre igual. Corte visto desde la punta del dedo.</text>
+<text x="24" y="92" font-size="13" font-weight="700" fill="#E8822A">LADO DEL MEÑIQUE (aquí está la cabeza)</text><text x="876" y="92" font-size="13" font-weight="700" fill="#555" text-anchor="end">LADO DEL PULGAR</text>
+<text x="190" y="116" font-size="12" text-anchor="middle" fill="#333">Placa cercana</text><text x="370" y="136" font-size="12" text-anchor="middle" fill="#333" font-weight="600">Lengüeta u ojo de la bielita</text><text x="550" y="116" font-size="12" text-anchor="middle" fill="#333">Placa de enfrente</text>
+<rect x="150" y="125" width="80" height="200" rx="6" fill="#e9ebee" stroke="#0c0c0c" stroke-width="2"/>
+<rect x="250" y="145" width="240" height="160" rx="6" fill="#2b2d31" stroke="#0c0c0c" stroke-width="2"/>
+<rect x="510" y="125" width="80" height="200" rx="6" fill="#e9ebee" stroke="#0c0c0c" stroke-width="2"/>
+<path d="M150 203 L174 215 L174 235 L150 247 Z" fill="#fafafa" stroke="#0c0c0c" stroke-width="1.2"/>
+<path d="M151 205 L172 216 L172 234 L151 245 Z" fill="#9aa3af" stroke="#0c0c0c" stroke-width="1.2"/>
+<path d="M156 225 H166 M161 220 V230" stroke="#0c0c0c" stroke-width="2"/>
+<rect x="172" y="218" width="386" height="14" fill="#b9c1cc" stroke="#0c0c0c" stroke-width="1.5"/>
+<path d="M512 218 l6 14 l6 -14 l6 14 l6 -14 l6 14 l6 -14 l6 14" fill="none" stroke="#0c0c0c" stroke-width="1.2"/>
+<rect x="174" y="212" width="56" height="26" fill="none" stroke="#E8822A" stroke-width="2" stroke-dasharray="5 4"/>
+<rect x="250" y="212" width="240" height="26" fill="none" stroke="#7ce0a4" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M50 225 H128" stroke="#E8822A" stroke-width="4"/><path d="M140 225 l-14 -9 v18 z" fill="#E8822A"/>
+<text x="24" y="268" font-size="13" font-weight="700" fill="#E8822A">1 · Entra aquí,</text><text x="24" y="286" font-size="12" fill="#333">por el barreno con</text><text x="24" y="302" font-size="12" fill="#333">avellanado (cono)</text>
+<text x="370" y="280" font-size="13" text-anchor="middle" fill="#7ce0a4" font-weight="700">2 · Pasa LIBRE (Ø2.3): aquí gira</text>
+<text x="612" y="218" font-size="13" font-weight="700" fill="#0c0c0c">3 · Se ROSCA aquí:</text><text x="612" y="238" font-size="13" fill="#0c0c0c">esto la deja fija</text>
+<text x="190" y="346" font-size="12" text-anchor="middle" fill="#333">barreno libre Ø2.3</text><text x="550" y="346" font-size="12" text-anchor="middle" fill="#333">barreno de rosca Ø1.7</text>
+<text x="24" y="382" font-size="13" fill="#0c0c0c"><tspan font-weight="700">Aprieta</tspan> hasta que la cabeza quede al ras del cono. Si la articulación se pone dura, regresa ¼ de vuelta.</text>
+<text x="24" y="402" font-size="13" fill="#0c0c0c">Si queda floja, se barrió la rosca: usa un tornillo un número más largo o pon una gota de pegamento en la rosca.</text>
+</svg>

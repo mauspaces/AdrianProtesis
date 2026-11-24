@@ -253,6 +253,39 @@
     rThumb.render(eThumb, cThumb); eThumb.remove(g); return (THUMB[clave] = rThumb.domElement.toDataURL());
   }
 
+  // ---------------------------------------------------------------- identifica las piezas (73): tablas con medidas, buscador por largo, dedos 1:1
+  if (M.identifica) {
+    const I = M.identifica, DEDO = { indice: 'Índice', medio: 'Medio', anular: 'Anular', menique: 'Meñique' };
+    $('identUnion').innerHTML = I.union; $('identBieleta').innerHTML = I.bieleta;
+    let dedo = 'indice';
+    const pintarDedo = () => { $('dedoSvg').innerHTML = I.dedos[dedo]; $('tabsDedo').querySelectorAll('[data-d]').forEach(b => b.classList.toggle('on', b.dataset.d === dedo)); };
+    $('tabsDedo').innerHTML = Object.keys(I.dedos).map(d => `<button class="chip" data-d="${d}">${DEDO[d]}</button>`).join('') + '<a class="chip" style="display:inline-flex;align-items:center;text-decoration:none" href="plantillas/plantillas_1a1.pdf" download>PDF para imprimir</a>';
+    $('tabsDedo').querySelectorAll('[data-d]').forEach(b => b.onclick = () => { dedo = b.dataset.d; pintarDedo(); }); pintarDedo();
+    const mini = id => { try { return miniatura([id], 'id:' + id); } catch (e) { return ''; } };
+    const COLS = {
+      falanges: [['Pieza', f => `<img alt="" src="${mini(f.id)}">`], ['ID', f => `<b>${f.id}</b>`], ['Dedo', f => f.dedo], ['Cuál', f => f.que], ['Largo', f => f.largo + ' mm', 'mm'],
+                 ['Ancho × alto', f => f.ancho + ' × ' + f.alto + ' mm', 'mm'], ['Entre ejes', f => f.eje ? f.eje + ' mm' : '—', 'mm'], ['Cómo reconocerla', f => f.como]],
+      bielitas: [['Pieza', f => `<img alt="" src="${mini(f.id)}">`], ['ID', f => `<b>${f.id}</b>`], ['Dedo', f => f.dedo], ['Cuál', f => f.que], ['Largo', f => f.largo + ' mm', 'mm'],
+                 ['Ancho', f => f.ancho + ' mm', 'mm'], ['Grosor', f => f.grosor + ' mm', 'mm'], ['Tornillos', f => f.tornillos.join(' y ')]],
+      diferencial: [['Pieza', f => `<img alt="" src="${mini(f.id)}">`], ['ID', f => `<b>${f.id}</b>`], ['Qué es', f => f.que], ['Largo', f => f.largo + ' mm', 'mm'], ['Ancho', f => f.ancho + ' mm', 'mm'],
+                    ['Agujeros', f => f.huecos], ['Entre agujeros', f => f.separaciones.length ? f.separaciones.join(' / ') + ' mm' : '—', 'mm'], ['Cómo reconocerla', f => f.como]] };
+    const TIT = { falanges: 'Falanges (blancas)', bielitas: 'Bielitas (de la más corta a la más larga)', diferencial: 'Diferencial, bieletas y biela del cuerno (negras)' };
+    $('tablasIdent').innerHTML = Object.keys(COLS).map(k => `<h4 class="ident-h4">${TIT[k]}</h4><div class="tabla-ident"><table data-fam="${k}"><thead><tr>${COLS[k].map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${
+      I[k].map(f => `<tr data-largo="${f.largo}" data-id="${f.id}">${COLS[k].map(c => `<td class="${c[2] || ''}">${c[1](f)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
+    const buscar = () => {
+      const fam = $('buscaFam').value, x = parseFloat($('buscaMm').value), filas = [...document.querySelectorAll(`#tablasIdent table[data-fam="${fam}"] tbody tr`)];
+      document.querySelectorAll('#tablasIdent tr').forEach(tr => tr.classList.remove('cerca', 'mejor'));
+      if (!(x > 0)) { $('buscaRes').textContent = 'Escribe el largo que mediste con el vernier.'; return; }
+      const orden = filas.map(tr => [tr, Math.abs(+tr.dataset.largo - x)]).sort((a, b) => a[1] - b[1]), cerca = orden.filter(([, d]) => d <= 1.5);
+      cerca.forEach(([tr]) => tr.classList.add('cerca')); if (orden.length) orden[0][0].classList.add('mejor');
+      const [tr, d] = orden[0] || [];
+      $('buscaRes').innerHTML = !tr ? '' : d > 3 ? `Nada mide eso en este grupo; lo más cercano es <b>${tr.dataset.id}</b> (${tr.dataset.largo} mm). ¿Es de otro grupo?`
+        : cerca.length > 1 ? `Pueden ser <b>${cerca.map(([t]) => t.dataset.id).join(', ')}</b>: compara el ancho, el grosor o ponla sobre la plantilla 1:1.` : `Es <b>${tr.dataset.id}</b> (${tr.dataset.largo} mm).`;
+      tr.scrollIntoView({ block: 'nearest' });
+    };
+    $('buscaMm').oninput = buscar; $('buscaFam').onchange = buscar; buscar();
+  }
+
   // ---------------------------------------------------------------- manual de armado detallado (fases, flechas de tornillos, vistas, casillas, impresión)
   const vm = Visor($('manualLienzo'), { fondo: 0xf6f6f6, dist: 600, el: 0.5, az: -2.3, rueda: true });
   const gm = new THREE.Group(); vm.escena.add(gm); const MM = {};

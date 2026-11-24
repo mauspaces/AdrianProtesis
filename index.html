@@ -165,6 +165,26 @@
     .imp-paso ol { padding-left:20px; } .imp-chk { list-style:none; padding-left:0; } .imp-extra table { width:100%; border-collapse:collapse; font-size:9pt; } .imp-extra td, .imp-extra th { border-bottom:1px solid #ccc; padding:3px; text-align:left; }
     .imp-portada h1 { font-size:26pt; margin:0 0 8px; } .imp-indice { columns:2; font-size:10pt; }
   }
+  /* identifica las piezas */
+  .ident-pasos { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:28px 0 8px; }
+  .ident-pasos div { border:1px solid var(--gris-cal); padding:18px; } .ident-pasos b { font:400 13px var(--maq); text-transform:uppercase; letter-spacing:.28px; display:block; margin-bottom:8px; }
+  .ident-pasos ul { margin:0; padding-left:18px; font-size:14px; } .ident-pasos li { margin:4px 0; }
+  .ident-h { font:400 22px/1.1 var(--maq); text-transform:uppercase; margin:48px 0 14px; }
+  .ident-svg svg { width:100%; height:auto; display:block; border:1px solid var(--gris-cal); }
+  .ident-dos { display:grid; grid-template-columns:1.25fr 1fr; gap:20px; align-items:start; }
+  .tabs-dedo { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+  .dedo-svg { border:1px solid var(--gris-cal); background:#fff; overflow-x:auto; } .dedo-svg svg { width:100%; min-width:640px; height:auto; display:block; }
+  .buscador { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; padding:16px; background:var(--gris-suave); margin:0 0 14px; }
+  .buscador label { font:400 12px var(--maq); text-transform:uppercase; letter-spacing:.28px; color:var(--gris); display:flex; flex-direction:column; gap:6px; }
+  .buscador select, .buscador input { height:40px; border:1px solid var(--gris-cal); border-radius:8px; padding:0 10px; font:500 15px var(--haas); background:#fff; color:var(--negro); }
+  .buscador input { width:120px; } #buscaRes { font-size:14px; flex:1; min-width:220px; }
+  .tabla-ident { overflow-x:auto; margin-bottom:26px; } .tabla-ident table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tabla-ident th { text-align:left; font:400 11px var(--maq); text-transform:uppercase; letter-spacing:.28px; color:var(--gris); padding:8px; border-bottom:1px solid var(--negro); white-space:nowrap; }
+  .tabla-ident td { padding:6px 8px; border-bottom:1px solid var(--gris-cal); vertical-align:middle; }
+  .tabla-ident td.mm { font:400 15px var(--maq); white-space:nowrap; } .tabla-ident img { width:64px; height:64px; display:block; }
+  .tabla-ident tr.cerca td { background:#fff4ea; } .tabla-ident tr.mejor td { background:#ffd9b3; }
+  .ident-h4 { font:400 14px var(--maq); text-transform:uppercase; letter-spacing:.28px; margin:22px 0 8px; }
+  @media (max-width: 1100px) { .ident-pasos, .ident-dos { grid-template-columns:1fr; } }
   /* socket */
   #socketLienzo { height:70vh; min-height:480px; }
   /* recomendaciones / preguntas */
@@ -211,7 +231,7 @@
   <button id="menuBtn" aria-label="Abrir menú">Menú</button>
   <nav id="nav">
     <a href="#explorar">Prótesis</a><a href="#mecanismo">Mecanismo</a><a href="#diferencial">Diferencial</a><a href="#socket">Socket</a><a href="#piezas">Piezas</a>
-    <a href="#armado">Armado</a><a href="#datos">Capacidad</a><a href="#recomendaciones">Recomendaciones</a><a href="#descargas">Descargas</a><a href="studio.html">Studio</a>
+    <a href="#identifica">Identificar</a><a href="#armado">Armado</a><a href="#datos">Capacidad</a><a href="#recomendaciones">Recomendaciones</a><a href="#descargas">Descargas</a><a href="studio.html">Studio</a>
   </nav>
 </header>
 
@@ -359,6 +379,30 @@
   </div>
 </section>
 
+<section class="claro-cap" id="identifica" style="padding-top:40px">
+  <div class="ancho">
+    <div class="eti">Antes de armar · Identifica las piezas</div>
+    <h2 class="media">¿Qué pieza es cuál?</h2>
+    <p class="grande">Si se revolvieron, sepáralas en tres pasos: por color, por forma y por medida. Mide con vernier o acuéstalas sobre las plantillas impresas a escala 1:1. Abajo también está, dedo por dedo, cómo entra y se une cada biela y cada perno.</p>
+    <div class="acciones" style="margin-top:20px"><a class="pill" href="plantillas/plantillas_1a1.pdf" download>Descargar plantillas 1:1 (PDF, 5 hojas)</a><a class="sub-btn" href="#armado">Ir al manual de armado</a></div>
+    <div class="ident-pasos">
+      <div><b>1 · Por color</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Blancas:</b> falanges, palma, pulgar, antebrazo y tapones.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Negras:</b> bielitas, bieletas, balancines, carro, biela del cuerno, eje de los nudillos, muñeca y socket.</li></ul></div>
+      <div><b>2 · Por forma</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 1:</b> la más larga del dedo, con un agujero grande (Ø5) y una palanca con perno abajo.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 2:</b> bisagra en las dos puntas. <b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 3:</b> la punta redondeada.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Bielitas:</b> barritas negras con un agujero en cada punta (8, todas de distinto largo).</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Bieletas:</b> un ojo redondo y un ojo en C. Las 4 son idénticas.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Balancines:</b> barras con 3 agujeros.</li></ul></div>
+      <div><b>3 · Por medida</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Largo:</b> de punta a punta, la medida más grande, con vernier.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Entre ejes:</b> de la orilla de un agujero a la MISMA orilla del otro (equivale de centro a centro).</li><li>Escríbelo en el buscador de abajo y te dice cuál es. O ponla sobre la plantilla 1:1.</li></ul></div>
+    </div>
+    <h3 class="ident-h">Así entra y se une cada perno</h3>
+    <div class="ident-dos"><div class="ident-svg" id="identUnion"></div><div class="ident-svg" id="identBieleta"></div></div>
+    <h3 class="ident-h">Cada dedo, perno por perno (escala 1:1)</h3>
+    <div class="tabs-dedo claro-cap" style="padding:0" id="tabsDedo"></div>
+    <div class="dedo-svg" id="dedoSvg"></div>
+    <p class="gris" style="font-size:13px;margin-top:8px">Se ve del lado del meñique porque ahí quedan las cabezas de TODOS los tornillos de los dedos. Al imprimir la plantilla al 100 %, el dedo armado coincide con el dibujo.</p>
+    <h3 class="ident-h">Encuentra una pieza por su medida</h3>
+    <div class="buscador"><label>Qué es<select id="buscaFam"><option value="falanges">Falange (blanca)</option><option value="bielitas">Bielita (barrita negra de 2 agujeros)</option><option value="diferencial">Pieza negra del diferencial</option></select></label>
+      <label>Largo medido (mm)<input id="buscaMm" type="number" step="0.1" min="0" placeholder="ej. 33.5"></label><div id="buscaRes" aria-live="polite"></div></div>
+    <div id="tablasIdent"></div>
+  </div>
+</section>
+
 <section class="claro-cap" id="armado" style="padding-top:40px">
   <div class="ancho">
     <div class="eti">04 · Manual de armado</div>
@@ -439,7 +483,7 @@
   <span>HAND-E · Prótesis izquierda de Adrián · 2026</span>
   <span class="aviso">Diseño de prueba. Antes de usarla todos los días, debe revisarla un protesista: ajuste del socket, piel y sujeción.</span></footer>
 <script src="three.min.js"></script>
-<script src="modelo.js?v=202611232247"></script>
-<script src="app.js?v=202611232247"></script>
+<script src="modelo.js?v=202611232333"></script>
+<script src="app.js?v=202611232333"></script>
 </body>
 </html>
