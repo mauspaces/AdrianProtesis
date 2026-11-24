@@ -253,46 +253,128 @@
     rThumb.render(eThumb, cThumb); eThumb.remove(g); return (THUMB[clave] = rThumb.domElement.toDataURL());
   }
 
-  // ---------------------------------------------------------------- manual tipo lego
+  // ---------------------------------------------------------------- manual de armado detallado (fases, flechas de tornillos, vistas, casillas, impresión)
   const vm = Visor($('manualLienzo'), { fondo: 0xf6f6f6, dist: 600, el: 0.5, az: -2.3, rueda: true });
   const gm = new THREE.Group(); vm.escena.add(gm); const MM = {};
-  Object.entries(M.piezas).forEach(([k, o]) => { const ms = new THREE.Mesh(geo(k, o), mat(o.color, metal(o.color) ? { metalness: 0.7, roughness: 0.3 } : {})); ms.userData.dir = V3(o.explo || [0, 0, 0]); ms.visible = false; gm.add(ms); MM[k] = ms; });
-  Object.entries(M.refs).forEach(([k, o]) => { const ms = new THREE.Mesh(geo('r:' + k, o), mat('#c97a64', { roughness: 0.7 })); ms.visible = false; ms.userData.dir = new THREE.Vector3(); gm.add(ms); MM[k] = ms; });
-  const nuevoMat = mat('#0c0c0c', { roughness: 0.45 }), viejoMat = mat('#bdbdbd', { roughness: 0.7, transparent: true, opacity: 0.2, depthWrite: false });
+  Object.entries(M.piezas).forEach(([k, o]) => { const ms = new THREE.Mesh(geo(k, o), mat(o.color, metal(o.color) ? { metalness: 0.7, roughness: 0.3 } : {})); ms.userData.dir = V3(o.explo || [0, 0, 0]); ms.userData.color = o.color; ms.visible = false; gm.add(ms); MM[k] = ms; });
+  Object.entries(M.refs).forEach(([k, o]) => { const ms = new THREE.Mesh(geo('r:' + k, o), mat('#c97a64', { roughness: 0.7 })); ms.visible = false; ms.userData.dir = new THREE.Vector3(); ms.userData.color = '#c97a64'; gm.add(ms); MM[k] = ms; });
+  const NAR = '#E8822A', nuevoMat = mat(NAR, { roughness: 0.42 }), fantasmaMat = mat('#bdbdbd', { roughness: 0.7, transparent: true, opacity: 0.2, depthWrite: false }), solidoMat = mat('#d9dbde', { roughness: 0.65 });
+  const realMat = ms => mat(ms.userData.color, metal(ms.userData.color) ? { metalness: 0.7, roughness: 0.3 } : {});
+  const EJEY = new THREE.Vector3(0, 1, 0), FLE = {}, mFle = new THREE.MeshBasicMaterial({ color: 0xE8822A }), gCil = new THREE.CylinderGeometry(0.85, 0.85, 1, 10), gCono = new THREE.ConeGeometry(2.3, 5.5, 18);
+  Object.entries(M.flechas || {}).forEach(([k, f]) => {
+    const a = V3(f.a), b = V3(f.b), u = b.clone().sub(a), L = u.length(); u.normalize();
+    const g = new THREE.Group(), c = new THREE.Mesh(gCil, mFle), p = new THREE.Mesh(gCono, mFle);
+    c.scale.set(1, Math.max(1, L - 5.5), 1); c.position.copy(a).addScaledVector(u, (L - 5.5) / 2); c.quaternion.setFromUnitVectors(EJEY, u);
+    p.position.copy(b).addScaledVector(u, -2.75); p.quaternion.setFromUnitVectors(EJEY, u);
+    g.add(c, p); g.visible = false; g.userData.u = u; vm.escena.add(g); FLE[k] = g;
+  });
   const resolver = p => M.piezas[p] || M.refs[p] ? [p] : mallasDe(p);
-  const PASOS = M.pasos; let paso = 0, anim = 0;
-  function irPaso(i) {
-    paso = Math.max(0, Math.min(PASOS.length - 1, i)); const P = PASOS[paso];
-    const antes = new Set(), ahora = new Set(resolver ? P.p.flatMap(resolver) : []);
-    PASOS.slice(0, paso).forEach(x => x.p.flatMap(resolver).forEach(k => antes.add(k)));
-    const todo = paso === 0;
+  const PASOS = M.pasos, FASES = M.manual.fases, EXTRA = M.manual.extras, NP = PASOS.length;
+  const ANTES = []; { const s = new Set(); PASOS.forEach((P, i) => { ANTES[i] = new Set(s); if (!P.modo) P.p.flatMap(resolver).forEach(k => s.add(k)); }); }
+  const VISTAS = { tq: [-2.3, 0.5, '3/4'], dorso: [-1.95, 1.0, 'Dorso'], palma: [-1.95, -1.0, 'Palma'], pulgar: [0.6, 0.38, 'Lado del pulgar'], menique: [Math.PI - 0.6, 0.38, 'Lado del meñique'], punta: [1.5708, 0.15, 'Desde la punta'], muneca: [-1.5708, 0.15, 'Desde la muñeca'] };
+  const OTRAS = { tq: ['dorso', 'palma'], dorso: ['tq', 'palma'], palma: ['tq', 'dorso'], pulgar: ['tq', 'menique'], menique: ['tq', 'pulgar'], punta: ['tq', 'muneca'], muneca: ['tq', 'punta'] };
+  const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
+  let paso = 0, anim = 1, verAntes = 'fantasma', hechos = new Set(LS.get('hande_man_chk', []));
+  function escenaPaso(i) {                                   // qué se ve y de qué color (sin tocar cámara ni texto)
+    const P = PASOS[i], ahora = new Set(P.p.flatMap(resolver)), antes = P.modo === 'aparte' ? new Set() : ANTES[i], todo = P.modo === 'todo';
+    const modoAntes = !ahora.size && !todo ? 'real' : verAntes;
     Object.entries(MM).forEach(([k, ms]) => {
-      ms.visible = todo ? (M.piezas[k] && porCat[k] && porCat[k].tipo === 'imprimir') : (antes.has(k) || ahora.has(k));
-      ms.material = todo ? mat(M.piezas[k] ? M.piezas[k].color : '#ccc') : ahora.has(k) ? (k === 'munon' ? mat('#c97a64') : nuevoMat) : viejoMat;
-      ms.position.set(0, 0, 0); ms.userData.nuevo = !todo && ahora.has(k);
-      if (todo) ms.position.copy(ms.userData.dir);
+      const imp = M.piezas[k] && porCat[k] && porCat[k].tipo === 'imprimir';
+      ms.visible = todo ? !!imp : ahora.has(k) || (antes.has(k) && modoAntes !== 'oculto');
+      ms.material = todo ? realMat(ms) : ahora.has(k) ? (k === 'munon' ? realMat(ms) : nuevoMat) : modoAntes === 'real' ? realMat(ms) : modoAntes === 'solido' ? solidoMat : fantasmaMat;
+      ms.userData.nuevo = !todo && ahora.has(k); ms.position.set(0, 0, 0); if (todo) ms.position.copy(ms.userData.dir);
     });
-    anim = 0;
-    const foco = new THREE.Group(), ks = todo ? Object.keys(MM).filter(k => MM[k].visible) : [...ahora];
-    const b = new THREE.Box3(); ks.forEach(k => { const ms = MM[k]; if (ms && ms.geometry) { ms.geometry.computeBoundingBox(); const bb = ms.geometry.boundingBox.clone().translate(ms.position); b.union(bb); } });
-    if (!b.isEmpty()) { const s = b.getBoundingSphere(new THREE.Sphere()); vm.ir(vm.az, vm.el, Math.max(260, s.radius * 3.2), s.center); }
-    $('pasoDe').textContent = `Paso ${paso + 1} de ${PASOS.length}`; $('pasoNum').textContent = String(paso + 1).padStart(2, '0');
-    $('pasoT').textContent = P.t; $('pasoD').textContent = P.d; $('consejo').innerHTML = P.tip ? `<b>Consejo · </b>${P.tip}` : '';
-    // piezas que necesitas (agrupadas por catalogo)
-    const cuenta = {};
-    P.p.forEach(p => { const id = p.startsWith('T:') ? (Object.keys(TOR).find(k => p.includes(TOR[k])) || p) : M.piezas[p] || M.refs[p] ? (p.includes(':') ? p.split(':')[0] : p) : p; const ks = resolver(p);
-      if (!cuenta[id]) cuenta[id] = { n: 0, ks: [] }; cuenta[id].n += p.includes(':') ? 1 : (porCat[id] ? porCat[id].cantidad : 1); cuenta[id].ks.push(...ks); });
-    $('necesitas').innerHTML = Object.entries(cuenta).map(([id, x]) => { const c = porCat[id] || { nombre: id === 'munon' ? 'Su muñón + calceta' : id };
-      const nombre = c.nombre.replace(/^(Índice|Medio|Anular|Meñique) · /, '$1 · ');
-      return `<div class="pz"><b>${x.n}×</b><img alt="" src="${miniatura(x.ks.slice(0, 6), id + ':' + x.ks.length)}"><div>${nombre}</div></div>`; }).join('') || '<div class="gris" style="grid-column:1/-1;font-size:14px">Todas las piezas impresas (abajo puedes descargarlas).</div>';
-    $('puntos').innerHTML = PASOS.map((_, j) => `<i class="${j <= paso ? 'on' : ''}" title="Paso ${j + 1}"></i>`).join('');
-    $('puntos').querySelectorAll('i').forEach((el, j) => el.onclick = () => irPaso(j));
-    $('ant').disabled = paso === 0; $('sig').textContent = paso === PASOS.length - 1 ? 'Inicio ↺' : 'Siguiente →';
+    Object.entries(FLE).forEach(([k, g]) => { g.visible = (P.fl || []).includes(k); g.position.set(0, 0, 0); });
   }
-  vm.cada = dt => { if (anim < 1) { anim = Math.min(1, anim + dt / 0.9); const k = 1 - sm(anim);
-    Object.values(MM).forEach(ms => { if (ms.userData.nuevo) { const d = ms.userData.dir.lengthSq() > 1 ? ms.userData.dir : new THREE.Vector3(0, 0, 60); ms.position.copy(d).multiplyScalar(k); } }); } };
-  $('ant').onclick = () => irPaso(paso - 1); $('sig').onclick = () => irPaso(paso === PASOS.length - 1 ? 0 : paso + 1);
-  irPaso(0);
+  function esferaPaso(i) {
+    const P = PASOS[i], ks = P.foco && P.foco.length ? P.foco.flatMap(resolver) : P.p.length ? P.p.flatMap(resolver) : Object.keys(MM).filter(k => MM[k].visible), b = new THREE.Box3();
+    const sumar = ms => { ms.geometry.computeBoundingBox(); b.union(ms.geometry.boundingBox.clone().translate(ms.position)); };
+    ks.forEach(k => MM[k] && MM[k].geometry && sumar(MM[k]));
+    (P.fl || []).forEach(k => { if (FLE[k]) { FLE[k].updateMatrixWorld(true); b.expandByObject(FLE[k]); } });
+    if (b.isEmpty()) Object.values(MM).forEach(ms => ms.visible && sumar(ms));
+    return b.getBoundingSphere(new THREE.Sphere());
+  }
+  function ponerVista(v, s) {
+    const [az, el] = VISTAS[v]; s = s || esferaPaso(paso); vm.ir(az, el, Math.max(120, s.radius * 3.1), s.center);
+    $('vistasMan').querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+  }
+  $('vistasMan').innerHTML = Object.entries(VISTAS).map(([k, v]) => `<button data-v="${k}">${v[2]}</button>`).join('');
+  $('vistasMan').querySelectorAll('[data-v]').forEach(b => b.onclick = () => ponerVista(b.dataset.v));
+  const pasoHecho = P => (P.chk || []).length > 0 && P.chk.every((_, j) => hechos.has(P.id + ':' + j));
+  function fases() {
+    $('fasesMan').innerHTML = FASES.map((f, k) => {
+      const ps = PASOS.map((P, i) => [P, i]).filter(([P]) => P.fase === k), cc = ps.filter(([P]) => (P.chk || []).length), h = cc.filter(([P]) => pasoHecho(P)).length;
+      return `<button class="fase${PASOS[paso].fase === k ? ' on' : ''}${cc.length && h === cc.length ? ' hecha' : ''}" data-i="${ps[0][1]}">${k + 1} · ${f} <small>${h}/${cc.length}</small></button>`;
+    }).join('');
+    $('fasesMan').querySelectorAll('[data-i]').forEach(b => b.onclick = () => irPaso(+b.dataset.i));
+  }
+  $('saltar').innerHTML = FASES.map((f, k) => `<optgroup label="${k + 1} · ${f}">${PASOS.map((P, i) => P.fase === k ? `<option value="${i}">${i + 1}. ${P.t}</option>` : '').join('')}</optgroup>`).join('');
+  $('saltar').onchange = () => irPaso(+$('saltar').value);
+  function necesitas(P) {
+    const cuenta = {};
+    P.p.forEach(p => { const id = p.startsWith('T:') ? (Object.keys(TOR).find(k => p.includes(TOR[k])) || p) : M.piezas[p] || M.refs[p] ? (p.includes(':') ? p.split(':')[0] : p) : p, ks = resolver(p);
+      if (!cuenta[id]) cuenta[id] = { n: 0, ks: [] }; cuenta[id].n += p.includes(':') ? 1 : (porCat[id] ? porCat[id].cantidad : 1); cuenta[id].ks.push(...ks); });
+    return Object.entries(cuenta).filter(([id]) => !/^C1[3-6]$/.test(id)).map(([id, x]) => { const c = porCat[id] || { nombre: id === 'munon' ? 'Su muñón + calceta' : id };
+      return `<div class="pz"><b>${x.n}×</b><img alt="" src="${miniatura(x.ks.slice(0, 6), id + ':' + x.ks.length)}"><div>${id === 'munon' ? '' : id + ' · '}${c.nombre}</div></div>`; }).join('');
+  }
+  function irPaso(i) {
+    paso = (i + NP) % NP; const P = PASOS[paso]; LS.set('hande_man_paso', paso);
+    escenaPaso(paso); anim = 0; ponerVista(P.vista || 'tq');
+    $('pasoMeta').innerHTML = `<span>Fase ${P.fase + 1} · ${FASES[P.fase]}</span><span>⏱ ${P.min} min</span>`;
+    $('pasoNum').innerHTML = `${String(paso + 1).padStart(2, '0')}<small> / ${NP}</small>`;
+    $('pasoT').textContent = P.t; $('pasoObj').textContent = P.obj || '';
+    const pz = necesitas(P), tor = (P.tor || []).map(([id, n, t]) => `<div><b>${n}×</b><span>${t}</span><code>${id}</code></div>`).join('');
+    $('necesitas').innerHTML = pz; $('necesitas').hidden = !pz; $('tornillosMan').innerHTML = tor; $('bNecesitas').hidden = !pz && !tor;
+    $('herrMan').innerHTML = (P.herr || []).map(h => `<span>${h}</span>`).join(''); $('bHerr').hidden = !(P.herr || []).length;
+    $('accionesMan').innerHTML = (P.acc || []).map(a => `<li>${a}</li>`).join('');
+    $('verificaMan').innerHTML = (P.chk || []).map((c, j) => { const k = P.id + ':' + j; return `<label><input type="checkbox" data-k="${k}"${hechos.has(k) ? ' checked' : ''}><span>${c}</span></label>`; }).join('');
+    $('bVerifica').hidden = !(P.chk || []).length;
+    $('verificaMan').querySelectorAll('input').forEach(x => x.onchange = () => { x.checked ? hechos.add(x.dataset.k) : hechos.delete(x.dataset.k); LS.set('hande_man_chk', [...hechos]); fases(); });
+    $('erroresMan').innerHTML = (P.err || []).length ? `<b>⚠ Errores comunes</b><ul>${P.err.map(e => `<li>${e}</li>`).join('')}</ul>` : '';
+    $('consejo').innerHTML = P.tip ? `<b>Consejo · </b>${P.tip}` : '';
+    $('extraAviso').hidden = !P.extra; $('extraMan').hidden = !P.extra; $('extraMan').innerHTML = P.extra ? EXTRA[P.extra] : '';
+    $('ant').disabled = paso === 0; $('sig').textContent = paso === NP - 1 ? 'Inicio ↺' : 'Siguiente →';
+    $('saltar').value = paso; $('avanceMan').style.width = ((paso + 1) / NP * 100) + '%'; fases();
+  }
+  let tFle = 0;
+  vm.cada = dt => {
+    tFle += dt;
+    if (anim < 1) { anim = Math.min(1, anim + dt / 1.1); const k = 1 - sm(anim);
+      Object.values(MM).forEach(ms => { if (ms.userData.nuevo) { const d = ms.userData.dir.lengthSq() > 1 ? ms.userData.dir : new THREE.Vector3(0, 0, 60); ms.position.copy(d).multiplyScalar(k); } }); }
+    const off = reducido ? 0 : 2.5 * (1 + Math.sin(tFle * 4)); Object.values(FLE).forEach(g => { if (g.visible) g.position.copy(g.userData.u).multiplyScalar(-off); });
+  };
+  $('comoEntra').onclick = () => { anim = 0; };
+  $('verAntes').onchange = () => { verAntes = $('verAntes').value; escenaPaso(paso); anim = 1; };
+  $('ant').onclick = () => irPaso(paso - 1); $('sig').onclick = () => irPaso(paso === NP - 1 ? 0 : paso + 1);
+  $('btnBorrarAvance').onclick = () => { if (confirm('¿Borrar todas las casillas que marcaste en este navegador?')) { hechos = new Set(); LS.set('hande_man_chk', []); irPaso(paso); } };
+  let enManual = false; new IntersectionObserver(es => es.forEach(x => enManual = x.isIntersecting), { threshold: 0.25 }).observe($('armado'));
+  addEventListener('keydown', e => { if (!enManual || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowRight') { irPaso(paso + 1); e.preventDefault(); } else if (e.key === 'ArrowLeft') { irPaso(paso - 1); e.preventDefault(); } });
+  // impresión: 3 vistas por paso, renderizadas aquí mismo
+  const impresion = document.createElement('div'); impresion.id = 'impresionManual'; document.body.appendChild(impresion);
+  $('btnImprimir').onclick = async () => {
+    const btn = $('btnImprimir'), txt0 = btn.textContent; btn.disabled = true;
+    const W = 720, H = 450, rr = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); rr.setSize(W, H); rr.setClearColor(0xffffff);
+    const cam = new THREE.PerspectiveCamera(28, W / H, 1, 6000), luz = new THREE.DirectionalLight(0xffffff, 0.7); vm.escena.add(luz);
+    const vivo = vm.vivo; vm.vivo = false; let html = `<section class="imp-portada"><h1>Hand-e · Manual de armado</h1><p>${NP} pasos en ${FASES.length} fases. Lo nuevo de cada paso sale en naranja; las flechas naranjas marcan por dónde entra cada tornillo.</p><ol class="imp-indice">${FASES.map((f, k) => `<li>${f} (pasos ${PASOS.findIndex(P => P.fase === k) + 1}–${PASOS.length - [...PASOS].reverse().findIndex(P => P.fase === k)})</li>`).join('')}</ol></section>`;
+    for (let i = 0; i < NP; i++) {
+      const P = PASOS[i]; escenaPaso(i); const s = esferaPaso(i), vs = [P.vista || 'tq', ...OTRAS[P.vista || 'tq']];
+      const imgs = vs.map(v => { const [az, el] = VISTAS[v], d = Math.max(120, s.radius * 3.1), ce = Math.cos(el);
+        cam.position.set(s.center.x + d * ce * Math.cos(az), s.center.y + d * ce * Math.sin(az), s.center.z + d * Math.sin(el)); cam.up.set(0, 0, 1); cam.lookAt(s.center);
+        luz.position.copy(cam.position).add(new THREE.Vector3(0, 0, 400)); rr.render(vm.escena, cam); return rr.domElement.toDataURL('image/jpeg', 0.84); });
+      html += `<article class="imp-paso"><div class="imp-cab"><span>Fase ${P.fase + 1} · ${FASES[P.fase]}</span><span>Paso ${i + 1} de ${NP} · ${P.min} min</span></div><h2>${i + 1}. ${P.t}</h2><p>${P.obj || ''}</p>
+        <div class="imp-vistas">${imgs.map((src, j) => `<figure><img src="${src}" alt=""><figcaption>${VISTAS[vs[j]][2]}</figcaption></figure>`).join('')}</div>
+        ${(P.tor || []).length ? `<p><b>Tornillos:</b> ${P.tor.map(([id, n, t]) => `${n}× ${t}`).join(' · ')}</p>` : ''}
+        <ol>${(P.acc || []).map(a => `<li>${a}</li>`).join('')}</ol>
+        ${(P.chk || []).length ? `<p><b>Antes de seguir, revisa:</b></p><ul class="imp-chk">${P.chk.map(c => `<li>☐ ${c}</li>`).join('')}</ul>` : ''}
+        ${(P.err || []).length ? `<p><b>Errores comunes:</b> ${P.err.join(' ')}</p>` : ''}${P.tip ? `<p><b>Consejo:</b> ${P.tip}</p>` : ''}
+        ${P.extra ? `<div class="imp-extra">${EXTRA[P.extra]}</div>` : ''}</article>`;
+      btn.textContent = `Preparando ${i + 1} de ${NP}…`; await new Promise(r => setTimeout(r, 0));
+    }
+    vm.escena.remove(luz); rr.dispose(); vm.vivo = vivo; impresion.innerHTML = html; irPaso(paso);
+    btn.textContent = txt0; btn.disabled = false; setTimeout(() => window.print(), 300);
+  };
+  fases(); irPaso(Math.min(NP - 1, Math.max(0, +LS.get('hande_man_paso', 0) || 0)));
 
   // ---------------------------------------------------------------- hero (gira sola) y explorador
   const vh = Visor($('heroLienzo'), { fondo: 0xffffff, auto: 0.25, dist: 760, el: 0.32, az: -2.5, quieto: false });

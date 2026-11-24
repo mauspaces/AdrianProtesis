@@ -102,23 +102,69 @@
   #inspLienzo { height:360px; background:var(--gris-suave); }
   .insp-txt { padding:20px 0; }
   .insp-txt .medidas { font:400 28px/1.11 var(--maq); margin:6px 0 12px; }
-  /* manual tipo lego */
-  .manual { display:grid; grid-template-columns:1fr 420px; gap:0; border:1px solid var(--gris-cal); }
-  #manualLienzo { height:640px; background:#f6f6f6; }
-  .paso-col { padding:32px; border-left:1px solid var(--gris-cal); display:flex; flex-direction:column; }
-  .paso-num { font:400 122px/1 var(--maq); letter-spacing:-1.22px; margin:0; }
-  .paso-de { font:400 14px var(--maq); color:var(--gris); text-transform:uppercase; letter-spacing:.28px; }
-  .paso-col h3 { font:400 28px/1.11 var(--maq); text-transform:uppercase; margin:18px 0 12px; }
-  .necesitas { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
+  /* manual de armado detallado */
+  .fases { display:flex; gap:8px; flex-wrap:wrap; margin:28px 0 14px; }
+  .fase { min-height:36px; padding:6px 14px; border-radius:24px; border:1px solid var(--gris-cal); background:var(--blanco); font:500 13px var(--haas); cursor:pointer; display:inline-flex; align-items:center; gap:8px; color:var(--negro); text-align:left; }
+  .fase small { font:400 11px var(--maq); color:var(--gris); }
+  .fase.on { background:var(--negro); color:var(--blanco); border-color:var(--negro); } .fase.on small { color:rgba(255,255,255,.7); }
+  .fase.hecha:not(.on) { border-color:#1f9d55; } .fase.hecha small { color:#1f9d55; }
+  .avance { height:4px; background:var(--gris-cal); margin-bottom:18px; } .avance i { display:block; height:100%; width:0; background:#E8822A; transition:width .3s; }
+  .manual { display:grid; grid-template-columns:minmax(0,1fr) 460px; border:1px solid var(--gris-cal); align-items:start; }
+  .visor-col { position:sticky; top:64px; background:var(--blanco); }
+  #manualLienzo { height:min(66vh, 620px); background:#f6f6f6; }
+  .vistas { display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px; border-top:1px solid var(--gris-cal); align-items:center; }
+  .vistas button { height:32px; padding:0 12px; border-radius:20px; border:1px solid var(--gris-cal); background:var(--blanco); font:500 12.5px var(--haas); cursor:pointer; color:var(--negro); }
+  .vistas button.on { background:var(--negro); color:var(--blanco); border-color:var(--negro); }
+  .vistas button.naranja { background:#E8822A; border-color:#E8822A; color:#fff; }
+  .vistas .sep { width:1px; height:22px; background:var(--gris-cal); margin:0 4px; }
+  .vistas label { font-size:12.5px; color:var(--gris); display:flex; gap:6px; align-items:center; }
+  .vistas select, #saltar { font:500 12.5px var(--haas); height:32px; border-radius:20px; border:1px solid var(--gris-cal); padding:0 10px; background:var(--blanco); color:var(--negro); }
+  .leyenda-man { display:flex; gap:14px; padding:0 12px 12px; font-size:12px; color:var(--gris); flex-wrap:wrap; }
+  .leyenda-man i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+  .paso-col { padding:26px 28px 24px; border-left:1px solid var(--gris-cal); display:flex; flex-direction:column; }
+  .paso-meta { display:flex; justify-content:space-between; gap:10px; font:400 12.5px var(--maq); color:var(--gris); text-transform:uppercase; letter-spacing:.28px; }
+  .paso-num { font:400 84px/1 var(--maq); letter-spacing:-1px; margin:10px 0 0; } .paso-num small { font-size:22px; color:var(--gris); letter-spacing:0; }
+  .paso-col h3 { font:400 26px/1.12 var(--maq); text-transform:uppercase; margin:12px 0 8px; }
+  .objetivo { font-size:16px; margin:0; }
+  .bloque-t { font:400 12px var(--maq); color:var(--gris); text-transform:uppercase; letter-spacing:.28px; margin:22px 0 8px; }
+  .necesitas { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .pz { border:1px solid var(--gris-cal); padding:6px; text-align:center; font-size:11.5px; line-height:1.2; position:relative; background:var(--blanco); }
   .pz img { width:100%; aspect-ratio:1; object-fit:contain; display:block; }
   .pz b { position:absolute; top:6px; left:8px; font:400 15px var(--maq); }
-  .consejo { border-top:1px solid var(--negro); padding-top:12px; margin-top:auto; font-size:14px; }
-  .consejo:empty { display:none; }
-  .nav-paso { display:flex; justify-content:space-between; align-items:center; margin-top:20px; gap:12px; }
-  .puntos { display:flex; gap:5px; flex-wrap:wrap; }
-  .puntos i { width:16px; height:3px; background:var(--gris-cal); cursor:pointer; }
-  .puntos i.on { background:var(--negro); }
+  .tornillos-man { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .tornillos-man div { display:flex; gap:10px; align-items:baseline; font-size:14px; padding:6px 10px; background:var(--gris-suave); }
+  .tornillos-man b { font:400 15px var(--maq); min-width:26px; } .tornillos-man span { flex:1; } .tornillos-man code { font:400 12px var(--maq); color:var(--gris); }
+  .herr-man { display:flex; flex-wrap:wrap; gap:6px; } .herr-man span { font-size:12.5px; border:1px solid var(--gris-cal); border-radius:16px; padding:5px 10px; }
+  ol.acciones { margin:0; padding:0; list-style:none; counter-reset:a; }
+  ol.acciones li { counter-increment:a; position:relative; padding:10px 0 10px 40px; border-top:1px solid var(--gris-cal); font-size:15px; line-height:1.5; }
+  ol.acciones li::before { content:counter(a); position:absolute; left:0; top:10px; width:26px; height:26px; border-radius:13px; background:var(--negro); color:var(--blanco); font:500 13px/26px var(--haas); text-align:center; }
+  ol.acciones code, .extra-man code { font:400 13px var(--maq); background:var(--gris-suave); padding:1px 5px; word-break:break-all; }
+  .verifica label { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--gris-cal); font-size:14.5px; cursor:pointer; }
+  .verifica input { width:18px; height:18px; margin-top:2px; accent-color:#1f9d55; flex:none; }
+  .errores { background:#fff4ea; border-left:3px solid #E8822A; padding:10px 14px; margin-top:18px; font-size:14px; } .errores ul { margin:6px 0 0; padding-left:18px; } .errores:empty { display:none; }
+  .consejo { border-top:1px solid var(--negro); padding-top:12px; margin-top:18px; font-size:14px; } .consejo:empty { display:none; }
+  .extra-aviso { font-size:13px; color:var(--gris); margin:14px 0 0; }
+  .nav-paso { display:flex; justify-content:space-between; align-items:center; margin-top:22px; gap:10px; } #saltar { height:44px; max-width:170px; flex:1; }
+  .extra-man { border:1px solid var(--gris-cal); border-top:0; padding:8px 28px 28px; }
+  .extra-man h4 { font:400 14px var(--maq); text-transform:uppercase; letter-spacing:.28px; margin:22px 0 10px; }
+  .tabla-man { overflow-x:auto; } .tabla-man table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .tabla-man th { text-align:left; font:400 11px var(--maq); text-transform:uppercase; letter-spacing:.28px; color:var(--gris); padding:8px; border-bottom:1px solid var(--negro); white-space:nowrap; }
+  .tabla-man td { padding:8px; border-bottom:1px solid var(--gris-cal); vertical-align:top; }
+  .diagrama svg { width:100%; height:auto; display:block; border:1px solid var(--gris-cal); }
+  .plantilla { background:#fff; border:1px dashed var(--gris); padding:8px; display:inline-block; }
+  .nota-man { font-size:13px; color:var(--gris); margin:8px 0 0; }
+  .acciones-manual { display:flex; gap:18px; flex-wrap:wrap; margin-top:20px; align-items:center; }
+  #impresionManual { display:none; }
+  @media print {
+    body > *:not(#impresionManual) { display:none !important; }
+    #impresionManual { display:block !important; font:11pt/1.4 Arial, sans-serif; color:#000; }
+    .imp-paso { break-before:page; } .imp-paso:first-of-type { break-before:auto; }
+    .imp-cab { display:flex; justify-content:space-between; font-size:9pt; color:#555; border-bottom:1px solid #000; padding-bottom:4px; }
+    .imp-paso h2 { font-size:17pt; margin:8px 0 4px; } .imp-vistas { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:8px 0; }
+    .imp-vistas img { width:100%; border:1px solid #ccc; } .imp-vistas figcaption { font-size:8pt; color:#555; text-align:center; }
+    .imp-paso ol { padding-left:20px; } .imp-chk { list-style:none; padding-left:0; } .imp-extra table { width:100%; border-collapse:collapse; font-size:9pt; } .imp-extra td, .imp-extra th { border-bottom:1px solid #ccc; padding:3px; text-align:left; }
+    .imp-portada h1 { font-size:26pt; margin:0 0 8px; } .imp-indice { columns:2; font-size:10pt; }
+  }
   /* socket */
   #socketLienzo { height:70vh; min-height:480px; }
   /* recomendaciones / preguntas */
@@ -142,6 +188,7 @@
     .display { font-size:76px; } h2.media { font-size:38px; }
     #inicio, .rail, .dos, .cat, .manual { grid-template-columns:1fr; }
     .paso-col { border-left:0; border-top:1px solid var(--gris-cal); }
+    .visor-col { position:static; } .extra-man { padding:8px 16px 20px; }
     .grupos { grid-template-columns:1fr; } .controles { grid-template-columns:1fr 1fr; }
     .inspector { position:static; }
   }
@@ -152,7 +199,7 @@
     .display { font-size:52px; } h2.media { font-size:30px; } .paso-num { font-size:72px; }
     .fila-spec b { font-size:36px; } .controles { grid-template-columns:1fr; }
     table.piezas .ocultar-movil { display:none; } .necesitas { grid-template-columns:repeat(2,1fr); }
-    #manualLienzo { height:420px; } footer { padding:40px 16px; }
+    #manualLienzo { height:400px; } .paso-col { padding:22px 16px; } .paso-num { font-size:60px; } footer { padding:40px 16px; }
   }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .barra-carga i { animation:none; } }
 </style>
@@ -315,21 +362,35 @@
 <section class="claro-cap" id="armado" style="padding-top:40px">
   <div class="ancho">
     <div class="eti">04 · Manual de armado</div>
-    <h2 class="media">Paso a paso</h2>
-    <p class="grande">Como un manual de bloques: en cada paso ves qué piezas necesitas y dónde van. Lo nuevo de cada paso aparece en negro.</p>
+    <h2 class="media">Paso a paso, sin perderse</h2>
+    <p class="grande">55 pasos en 10 fases, del primer tornillo hasta ponérsela. En cada paso: qué piezas y tornillos necesitas, qué hacer, qué revisar antes de seguir y los errores comunes. En el 3D lo nuevo sale en <b style="color:#E8822A;font-weight:500">naranja</b> y las flechas naranjas marcan por dónde entra cada tornillo. Gíralo con el mouse o el dedo, acerca con la rueda y cambia de vista con los botones. Tu avance se guarda en este navegador.</p>
+    <div class="fases" id="fasesMan"></div>
+    <div class="avance"><i id="avanceMan"></i></div>
     <div class="manual">
-      <canvas id="manualLienzo" class="lienzo3d" aria-label="Paso del armado en 3D"></canvas>
+      <div class="visor-col">
+        <canvas id="manualLienzo" class="lienzo3d" aria-label="Paso del armado en 3D"></canvas>
+        <div class="vistas" id="vistasMan"></div>
+        <div class="vistas"><button class="naranja" id="comoEntra">▶ Cómo entra</button><span class="sep"></span><label>Lo que ya armaste <select id="verAntes"><option value="fantasma">transparente</option><option value="solido">gris</option><option value="real">con su color</option><option value="oculto">oculto</option></select></label></div>
+        <div class="leyenda-man"><span><i style="background:#E8822A"></i>Lo nuevo de este paso</span><span><i style="background:#cfcfcf"></i>Lo que ya armaste</span><span><i style="background:#E8822A;width:16px;height:3px;border-radius:0"></i>Por aquí entra el tornillo</span></div>
+      </div>
       <div class="paso-col">
-        <div class="paso-de" id="pasoDe"></div>
+        <div class="paso-meta" id="pasoMeta"></div>
         <p class="paso-num" id="pasoNum"></p>
         <h3 id="pasoT"></h3>
-        <p id="pasoD" style="margin:0 0 6px"></p>
-        <div class="paso-de" style="margin-top:14px">Necesitas</div>
-        <div class="necesitas" id="necesitas"></div>
+        <p class="objetivo" id="pasoObj"></p>
+        <div id="bNecesitas"><div class="bloque-t">Necesitas</div><div class="necesitas" id="necesitas"></div><div class="tornillos-man" id="tornillosMan"></div></div>
+        <div id="bHerr"><div class="bloque-t">Herramientas</div><div class="herr-man" id="herrMan"></div></div>
+        <div class="bloque-t">Haz esto</div>
+        <ol class="acciones" id="accionesMan"></ol>
+        <div id="bVerifica"><div class="bloque-t">✓ Antes de seguir, revisa</div><div class="verifica" id="verificaMan"></div></div>
+        <div class="errores" id="erroresMan"></div>
         <div class="consejo" id="consejo"></div>
-        <div class="nav-paso"><button class="pill borde" id="ant">← Anterior</button><div class="puntos" id="puntos"></div><button class="pill" id="sig">Siguiente →</button></div>
+        <p class="extra-aviso" id="extraAviso" hidden>↓ Más abajo tienes la tabla o el diagrama de este paso.</p>
+        <div class="nav-paso"><button class="pill borde" id="ant">← Anterior</button><select id="saltar" aria-label="Ir a un paso"></select><button class="pill" id="sig">Siguiente →</button></div>
       </div>
     </div>
+    <div class="extra-man" id="extraMan" hidden></div>
+    <div class="acciones-manual"><button class="pill borde" id="btnImprimir">Imprimir el manual completo (3 vistas por paso)</button><button class="sub-btn" id="btnBorrarAvance">Borrar mis casillas marcadas</button></div>
   </div>
 </section>
 
@@ -378,7 +439,7 @@
   <span>HAND-E · Prótesis izquierda de Adrián · 2026</span>
   <span class="aviso">Diseño de prueba. Antes de usarla todos los días, debe revisarla un protesista: ajuste del socket, piel y sujeción.</span></footer>
 <script src="three.min.js"></script>
-<script src="modelo.js?v=202611181441"></script>
-<script src="app.js?v=202611181441"></script>
+<script src="modelo.js?v=202611232247"></script>
+<script src="app.js?v=202611232247"></script>
 </body>
 </html>
