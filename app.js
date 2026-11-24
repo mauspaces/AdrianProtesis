@@ -301,22 +301,45 @@
     p.position.copy(b).addScaledVector(u, -2.75); p.quaternion.setFromUnitVectors(EJEY, u);
     g.add(c, p); g.visible = false; g.userData.u = u; vm.escena.add(g); FLE[k] = g;
   });
+  const T3 = M.tornillos3d || {}, TOR3 = {}, mTor = new THREE.MeshStandardMaterial({ color: 0xdfe5ec, metalness: 0.25, roughness: 0.32, emissive: 0x20262e }), mRan = new THREE.MeshBasicMaterial({ color: 0x23262b });
+  Object.entries(T3).forEach(([k, s]) => {                   // eje local +y = hacia dónde entra; y = 0 en el asiento de la cabeza
+    const g = new THREE.Group(), r = s.D / 2, L = s.L, c = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, L, 14), mTor); c.position.y = L / 2; g.add(c);
+    let cab, ycara;
+    if (s.cab === 'cono') { cab = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.95, r * 1.9, r * 1.2, 22), mTor); cab.position.y = r * 0.6; ycara = -0.02; }
+    else { cab = new THREE.Mesh(new THREE.CylinderGeometry(s.D * 0.85, s.D * 0.85, s.D * 0.65, 22), mTor); cab.position.y = -s.D * 0.325; ycara = -s.D * 0.65 - 0.02; }
+    g.add(cab);
+    [0, Math.PI / 2].forEach(a => { const b = new THREE.Mesh(new THREE.BoxGeometry(s.D * (s.cab === 'cono' ? 1.5 : 1.1), 0.08, s.D * 0.22), mRan); b.position.y = ycara; b.rotation.y = a; g.add(b); });
+    const d = V3(s.d).normalize(), h = V3(s.h); g.userData = { h, d, L, q0: new THREE.Quaternion().setFromUnitVectors(EJEY, d) };
+    g.quaternion.copy(g.userData.q0); g.position.copy(h); g.visible = false; vm.escena.add(g); TOR3[k] = g;
+  });
+  function ponerTornillo(g, u) {                             // u < 0: afuera · 0–0.35: se acerca · 0.35–1: entra girando · 1: en su lugar
+    const { h, d, L, q0 } = g.userData, lejos = L + 16;
+    let x = 0, giro = 0;
+    if (u <= 0) x = lejos; else if (u < 0.35) x = lejos - (lejos - L) * sm(u / 0.35); else if (u < 1) { const k = (u - 0.35) / 0.65; x = L * (1 - k); giro = k * 5 * 2 * Math.PI; }
+    g.position.copy(h).addScaledVector(d, -x); g.quaternion.copy(q0).premultiply(new THREE.Quaternion().setFromAxisAngle(d, giro));
+  }
   const resolver = p => M.piezas[p] || M.refs[p] ? [p] : mallasDe(p);
   const PASOS = M.pasos, FASES = M.manual.fases, EXTRA = M.manual.extras, NP = PASOS.length;
   const ANTES = []; { const s = new Set(); PASOS.forEach((P, i) => { ANTES[i] = new Set(s); if (!P.modo) P.p.flatMap(resolver).forEach(k => s.add(k)); }); }
+  const TANTES = []; { const s = new Set(); PASOS.forEach((P, i) => { TANTES[i] = new Set(s); if (!P.modo) (P.ts || []).forEach(k => s.add(k)); }); }
   const VISTAS = { tq: [-2.3, 0.5, '3/4'], dorso: [-1.95, 1.0, 'Dorso'], palma: [-1.95, -1.0, 'Palma'], pulgar: [0.6, 0.38, 'Lado del pulgar'], menique: [Math.PI - 0.6, 0.38, 'Lado del meñique'], punta: [1.5708, 0.15, 'Desde la punta'], muneca: [-1.5708, 0.15, 'Desde la muñeca'] };
   const OTRAS = { tq: ['dorso', 'palma'], dorso: ['tq', 'palma'], palma: ['tq', 'dorso'], pulgar: ['tq', 'menique'], menique: ['tq', 'pulgar'], punta: ['tq', 'muneca'], muneca: ['tq', 'punta'] };
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } } };
-  let paso = 0, anim = 1, verAntes = 'fantasma', hechos = new Set(LS.get('hande_man_chk', []));
+  let paso = 0, anim = 1, verAntes = 'fantasma', hechos = new Set(LS.get('hande_man_chk', [])), rayos = false, tT = 99, hayNuevas = false, enAccion = false;
+  const matX = c => mat(c, { transparent: true, opacity: 0.26, depthWrite: false, roughness: 0.6 });
   function escenaPaso(i) {                                   // qué se ve y de qué color (sin tocar cámara ni texto)
     const P = PASOS[i], ahora = new Set(P.p.flatMap(resolver)), antes = P.modo === 'aparte' ? new Set() : ANTES[i], todo = P.modo === 'todo';
     const modoAntes = !ahora.size && !todo ? 'real' : verAntes;
     Object.entries(MM).forEach(([k, ms]) => {
       const imp = M.piezas[k] && porCat[k] && porCat[k].tipo === 'imprimir';
       ms.visible = todo ? !!imp : ahora.has(k) || (antes.has(k) && modoAntes !== 'oculto');
-      ms.material = todo ? realMat(ms) : ahora.has(k) ? (k === 'munon' ? realMat(ms) : nuevoMat) : modoAntes === 'real' ? realMat(ms) : modoAntes === 'solido' ? solidoMat : fantasmaMat;
+      ms.material = todo ? realMat(ms) : ahora.has(k) ? (k === 'munon' ? realMat(ms) : rayos ? matX(NAR) : nuevoMat) : rayos ? matX(modoAntes === 'real' ? ms.userData.color : '#bdbdbd') : modoAntes === 'real' ? realMat(ms) : modoAntes === 'solido' ? solidoMat : fantasmaMat;
+      if (k.startsWith('T:')) ms.visible = false;                    // los tornillos de muñeca y unión ahora son tornillos animados
       ms.userData.nuevo = !todo && ahora.has(k); ms.position.set(0, 0, 0); if (todo) ms.position.copy(ms.userData.dir);
     });
+    hayNuevas = [...ahora].some(k => MM[k] && !k.startsWith('T:') && MM[k].visible);
+    const tsAhora = P.ts || [], tsAntes = P.modo ? new Set() : TANTES[i];
+    Object.entries(TOR3).forEach(([k, g]) => { g.userData.nuevo = !P.modo && tsAhora.includes(k); g.visible = g.userData.nuevo || (tsAntes.has(k) && modoAntes !== 'oculto'); ponerTornillo(g, 1); });
     Object.entries(FLE).forEach(([k, g]) => { g.visible = (P.fl || []).includes(k); g.position.set(0, 0, 0); });
   }
   function esferaPaso(i) {
@@ -352,7 +375,7 @@
   }
   function irPaso(i) {
     paso = (i + NP) % NP; const P = PASOS[paso]; LS.set('hande_man_paso', paso);
-    escenaPaso(paso); anim = 0; ponerVista(P.vista || 'tq');
+    escenaPaso(paso); arrancar(); ponerVista(P.vista || 'tq');
     $('pasoMeta').innerHTML = `<span>Fase ${P.fase + 1} · ${FASES[P.fase]}</span><span>⏱ ${P.min} min</span>`;
     $('pasoNum').innerHTML = `${String(paso + 1).padStart(2, '0')}<small> / ${NP}</small>`;
     $('pasoT').textContent = P.t; $('pasoObj').textContent = P.obj || '';
@@ -370,13 +393,23 @@
     $('saltar').value = paso; $('avanceMan').style.width = ((paso + 1) / NP * 100) + '%'; fases();
   }
   let tFle = 0;
+  function arrancar() { anim = hayNuevas && !reducido ? 0 : 1; tT = reducido ? 99 : 0; enAccion = !reducido; }
+  const nuevosT = () => Object.values(TOR3).filter(g => g.userData.nuevo);
   vm.cada = dt => {
     tFle += dt;
     if (anim < 1) { anim = Math.min(1, anim + dt / 1.1); const k = 1 - sm(anim);
       Object.values(MM).forEach(ms => { if (ms.userData.nuevo) { const d = ms.userData.dir.lengthSq() > 1 ? ms.userData.dir : new THREE.Vector3(0, 0, 60); ms.position.copy(d).multiplyScalar(k); } }); }
-    const off = reducido ? 0 : 2.5 * (1 + Math.sin(tFle * 4)); Object.values(FLE).forEach(g => { if (g.visible) g.position.copy(g.userData.u).multiplyScalar(-off); });
+    const ts = nuevosT();
+    if (anim >= 1 && enAccion) {
+      tT += dt; const fin = 0.25 + Math.max(0, ts.length - 1) * 0.85 + 1.7;
+      ts.forEach((g, j) => ponerTornillo(g, (tT - 0.25 - j * 0.85) / 1.7));
+      if (tT > fin) { if ($('repetir').checked) { if (tT > fin + 1.4) { escenaPaso(paso); arrancar(); } } else enAccion = false; }
+    } else if (anim < 1) ts.forEach(g => ponerTornillo(g, -1));
+    const quietos = !enAccion || tT > 0.25 + Math.max(0, ts.length - 1) * 0.85 + 1.7;
+    const off = reducido ? 0 : 2.5 * (1 + Math.sin(tFle * 4)); Object.entries(FLE).forEach(([k, g]) => { const on = (PASOS[paso].fl || []).includes(k) && quietos; g.visible = on; if (on) g.position.copy(g.userData.u).multiplyScalar(-off); });
   };
-  $('comoEntra').onclick = () => { anim = 0; };
+  $('comoEntra').onclick = () => { escenaPaso(paso); arrancar(); };
+  $('rayosX').onclick = () => { rayos = !rayos; $('rayosX').setAttribute('aria-pressed', rayos); escenaPaso(paso); anim = 1; Object.values(TOR3).forEach(g => g.userData.nuevo && ponerTornillo(g, enAccion ? -1 : 1)); if (enAccion) tT = 0; };
   $('verAntes').onchange = () => { verAntes = $('verAntes').value; escenaPaso(paso); anim = 1; };
   $('ant').onclick = () => irPaso(paso - 1); $('sig').onclick = () => irPaso(paso === NP - 1 ? 0 : paso + 1);
   $('btnBorrarAvance').onclick = () => { if (confirm('¿Borrar todas las casillas que marcaste en este navegador?')) { hechos = new Set(); LS.set('hande_man_chk', []); irPaso(paso); } };
@@ -391,7 +424,7 @@
     const cam = new THREE.PerspectiveCamera(28, W / H, 1, 6000), luz = new THREE.DirectionalLight(0xffffff, 0.7); vm.escena.add(luz);
     const vivo = vm.vivo; vm.vivo = false; let html = `<section class="imp-portada"><h1>Hand-e · Manual de armado</h1><p>${NP} pasos en ${FASES.length} fases. Lo nuevo de cada paso sale en naranja; las flechas naranjas marcan por dónde entra cada tornillo.</p><ol class="imp-indice">${FASES.map((f, k) => `<li>${f} (pasos ${PASOS.findIndex(P => P.fase === k) + 1}–${PASOS.length - [...PASOS].reverse().findIndex(P => P.fase === k)})</li>`).join('')}</ol></section>`;
     for (let i = 0; i < NP; i++) {
-      const P = PASOS[i]; escenaPaso(i); const s = esferaPaso(i), vs = [P.vista || 'tq', ...OTRAS[P.vista || 'tq']];
+      const P = PASOS[i]; escenaPaso(i); enAccion = false; Object.values(FLE).forEach((g, j) => { const k = Object.keys(FLE)[j]; g.visible = (P.fl || []).includes(k); g.position.set(0, 0, 0); }); const s = esferaPaso(i), vs = [P.vista || 'tq', ...OTRAS[P.vista || 'tq']];
       const imgs = vs.map(v => { const [az, el] = VISTAS[v], d = Math.max(120, s.radius * 3.1), ce = Math.cos(el);
         cam.position.set(s.center.x + d * ce * Math.cos(az), s.center.y + d * ce * Math.sin(az), s.center.z + d * Math.sin(el)); cam.up.set(0, 0, 1); cam.lookAt(s.center);
         luz.position.copy(cam.position).add(new THREE.Vector3(0, 0, 400)); rr.render(vm.escena, cam); return rr.domElement.toDataURL('image/jpeg', 0.84); });

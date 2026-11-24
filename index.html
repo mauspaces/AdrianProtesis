@@ -116,6 +116,8 @@
   .vistas button { height:32px; padding:0 12px; border-radius:20px; border:1px solid var(--gris-cal); background:var(--blanco); font:500 12.5px var(--haas); cursor:pointer; color:var(--negro); }
   .vistas button.on { background:var(--negro); color:var(--blanco); border-color:var(--negro); }
   .vistas button.naranja { background:#E8822A; border-color:#E8822A; color:#fff; }
+  .vistas button[aria-pressed="true"] { background:var(--negro); color:var(--blanco); border-color:var(--negro); }
+  .vistas input[type=checkbox] { accent-color:#E8822A; width:16px; height:16px; }
   .vistas .sep { width:1px; height:22px; background:var(--gris-cal); margin:0 4px; }
   .vistas label { font-size:12.5px; color:var(--gris); display:flex; gap:6px; align-items:center; }
   .vistas select, #saltar { font:500 12.5px var(--haas); height:32px; border-radius:20px; border:1px solid var(--gris-cal); padding:0 10px; background:var(--blanco); color:var(--negro); }
@@ -414,8 +416,8 @@
       <div class="visor-col">
         <canvas id="manualLienzo" class="lienzo3d" aria-label="Paso del armado en 3D"></canvas>
         <div class="vistas" id="vistasMan"></div>
-        <div class="vistas"><button class="naranja" id="comoEntra">▶ Cómo entra</button><span class="sep"></span><label>Lo que ya armaste <select id="verAntes"><option value="fantasma">transparente</option><option value="solido">gris</option><option value="real">con su color</option><option value="oculto">oculto</option></select></label></div>
-        <div class="leyenda-man"><span><i style="background:#E8822A"></i>Lo nuevo de este paso</span><span><i style="background:#cfcfcf"></i>Lo que ya armaste</span><span><i style="background:#E8822A;width:16px;height:3px;border-radius:0"></i>Por aquí entra el tornillo</span></div>
+        <div class="vistas"><button class="naranja" id="comoEntra">▶ Ver cómo entra</button><button id="rayosX" aria-pressed="false">Rayos X</button><label><input type="checkbox" id="repetir"> Repetir</label><span class="sep"></span><label>Lo que ya armaste <select id="verAntes"><option value="fantasma">transparente</option><option value="solido">gris</option><option value="real">con su color</option><option value="oculto">oculto</option></select></label></div>
+        <div class="leyenda-man"><span><i style="background:#E8822A"></i>Lo nuevo de este paso</span><span><i style="background:#cfcfcf"></i>Lo que ya armaste</span><span><i style="background:#E8822A;width:16px;height:3px;border-radius:0"></i>Por aquí entra el tornillo</span><span><i style="background:#c3cad4"></i>Tornillo (entra girando)</span></div>
       </div>
       <div class="paso-col">
         <div class="paso-meta" id="pasoMeta"></div>
@@ -483,7 +485,7 @@
   <span>HAND-E · Prótesis izquierda de Adrián · 2026</span>
   <span class="aviso">Diseño de prueba. Antes de usarla todos los días, debe revisarla un protesista: ajuste del socket, piel y sujeción.</span></footer>
 <script src="three.min.js"></script>
-<script src="modelo.js?v=202611232333"></script>
-<script src="app.js?v=202611232333"></script>
+<script src="modelo.js?v=202611232358"></script>
+<script src="app.js?v=202611232358"></script>
 </body>
 </html>
