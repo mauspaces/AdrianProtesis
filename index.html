@@ -307,7 +307,7 @@
       <li>El carro jala un <b>diferencial de balancines</b>: un balancín principal y dos de dedo (índice-medio y anular-meñique).</li>
       <li>Cada balancín jala, con una <b>bieleta</b>, la <b>palanca</b> que tiene cada dedo bajo su nudillo, como un tendón flexor. Los 4 dedos giran sueltos en su eje.</li>
       <li>Si un dedo <b>toca el objeto</b>, se detiene; su balancín gira y los demás siguen cerrando hasta tocar. La mano se <b>amolda</b> a la forma del objeto.</li>
-      <li>Dentro de cada dedo, dos bielitas doblan solas la falange media y la punta, como un dedo real. El <b>pulgar</b> tiene su propio motor (MG90S) y una varilla de clip: cierra junto con los dedos con la misma señal del sensor, y la punta del índice llega a la suya (pinza).</li>
+      <li>Cada dedo es <b>una sola pieza</b> con su curva natural (más fuerte y sin piezas chiquitas que se traben). El <b>pulgar</b> tiene su propio motor (MG90S) y una varilla de clip: cierra junto con los dedos con la misma señal del sensor, y la punta del índice llega a la suya (pinza).</li>
       <li>La <b>muñeca</b> tiene su propio motor y gira hasta 80° de cada lado: con algo en la mano, <b>apretar la gira sin soltar</b>; con la mano abierta, un <b>pulso corto</b> pasa a modo muñeca. Un <b>modelo entrenado con sus señales</b> distingue los pulsos a propósito de los movimientos sin querer. El sensor EMG y su tarjeta van escondidos (el cable baja por una ranura dentro del antebrazo).</li>
     </ol>
   </div>
@@ -384,24 +384,11 @@
 <section class="claro-cap" id="identifica" style="padding-top:40px">
   <div class="ancho">
     <div class="eti">Antes de armar · Identifica las piezas</div>
-    <h2 class="media">¿Qué pieza es cuál?</h2>
-    <p class="grande">Si se revolvieron, sepáralas en tres pasos: por color, por forma y por medida. Mide con vernier o acuéstalas sobre las plantillas impresas a escala 1:1. Abajo también está, dedo por dedo, cómo entra y se une cada biela y cada perno.</p>
-    <div class="acciones" style="margin-top:20px"><a class="pill" href="plantillas/plantillas_1a1.pdf" download>Descargar plantillas 1:1 (PDF, 5 hojas)</a><a class="sub-btn" href="#armado">Ir al manual de armado</a></div>
-    <div class="ident-pasos">
-      <div><b>1 · Por color</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Blancas:</b> falanges, palma, pulgar, antebrazo y tapones.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Negras:</b> bielitas, bieletas, balancines, carro, biela del cuerno, eje de los nudillos, muñeca y socket.</li></ul></div>
-      <div><b>2 · Por forma</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 1:</b> la más larga del dedo, con un agujero grande (Ø5) y una palanca con perno abajo.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 2:</b> bisagra en las dos puntas. <b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Falange 3:</b> la punta redondeada.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Bielitas:</b> barritas negras con un agujero en cada punta (8, todas de distinto largo).</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Bieletas:</b> un ojo redondo y un ojo en C. Las 4 son idénticas.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Balancines:</b> barras con 3 agujeros.</li></ul></div>
-      <div><b>3 · Por medida</b><ul><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Largo:</b> de punta a punta, la medida más grande, con vernier.</li><li><b style="display:inline;font:inherit;text-transform:none;letter-spacing:0">Entre ejes:</b> de la orilla de un agujero a la MISMA orilla del otro (equivale de centro a centro).</li><li>Escríbelo en el buscador de abajo y te dice cuál es. O ponla sobre la plantilla 1:1.</li></ul></div>
-    </div>
-    <h3 class="ident-h">Así entra y se une cada perno</h3>
-    <div class="ident-dos"><div class="ident-svg" id="identUnion"></div><div class="ident-svg" id="identBieleta"></div></div>
-    <h3 class="ident-h">Cada dedo, perno por perno (escala 1:1)</h3>
-    <div class="tabs-dedo claro-cap" style="padding:0" id="tabsDedo"></div>
-    <div class="dedo-svg" id="dedoSvg"></div>
-    <p class="gris" style="font-size:13px;margin-top:8px">Se ve del lado del meñique porque ahí quedan las cabezas de TODOS los tornillos de los dedos. Al imprimir la plantilla al 100 %, el dedo armado coincide con el dibujo.</p>
-    <h3 class="ident-h">Encuentra una pieza por su medida</h3>
-    <div class="buscador"><label>Qué es<select id="buscaFam"><option value="falanges">Falange (blanca)</option><option value="bielitas">Bielita (barrita negra de 2 agujeros)</option><option value="diferencial">Pieza negra del diferencial</option></select></label>
-      <label>Largo medido (mm)<input id="buscaMm" type="number" step="0.1" min="0" placeholder="ej. 33.5"></label><div id="buscaRes" aria-live="polite"></div></div>
-    <div id="tablasIdent"></div>
+    <h2 class="media">¿Qué pieza es cuál? (mano v6)</h2>
+    <p class="grande">La mano v6 tiene 20 piezas impresas y casi todas se reconocen a la vista: cada dedo es UNA pieza, las 4 bieletas son iguales y los dos balancines de dedo se distinguen por sus puntos marcados.</p>
+    <div class="acciones" style="margin-top:20px"><a class="pill" href="stl/mano_v6_para_imprimir.zip" download>Descargar la mano v6 para imprimir (STL + hoja del pedido)</a><a class="sub-btn" href="#armado">Ir al manual de armado</a></div>
+    <div class="tabla-man" style="margin-top:22px"><table><thead><tr><th>ID</th><th>Pieza</th><th>Cómo reconocerla</th><th>Medidas (mm)</th></tr></thead><tbody><tr><td><b>P09</b></td><td>Palma · tapa (dorso)</td><td>La mitad grande SIN bolsas de servo; baja al final.</td><td>114 × 109 × 54</td></tr><tr><td><b>P10</b></td><td>Palma · base</td><td>La mitad con las bolsas del servo, del carro y del pulgar, y el cuadro de la muñeca.</td><td>125 × 116 × 46</td></tr><tr><td><b>P11</b></td><td>Eje de los nudillos</td><td>Varilla de Ø5 con una «bandera» plana en una punta.</td><td>86 × 15 × 7</td></tr><tr><td><b>P50</b></td><td>Dedo índice</td><td>Dedo de una pieza; el segundo más largo.</td><td>84 × 56 × 32</td></tr><tr><td><b>P51</b></td><td>Dedo medio</td><td>El dedo más largo.</td><td>97 × 63 × 29</td></tr><tr><td><b>P52</b></td><td>Dedo anular</td><td>Casi igual de largo que el índice, pero más angosto.</td><td>85 × 60 × 24</td></tr><tr><td><b>P53</b></td><td>Dedo meñique</td><td>El dedo más corto.</td><td>65 × 45 × 19</td></tr><tr><td><b>P24</b></td><td>Pulgar</td><td>Con una palanca y su oreja (agujerito para el clip).</td><td>65 × 57 × 36</td></tr><tr><td><b>P25</b></td><td>Carro</td><td>Cuadrito con un refuerzo redondo abajo y una ranura de lado para la biela.</td><td>14 × 13 × 5</td></tr><tr><td><b>P26</b></td><td>Balancín principal</td><td>La barra más larga del diferencial; el agujero de en medio tiene cono.</td><td>49 × 9 × 2</td></tr><tr><td><b>P27</b></td><td>Balancín índice–medio</td><td>Barra de 3 agujeros con 1 punto marcado.</td><td>27 × 9 × 2</td></tr><tr><td><b>P28</b></td><td>Balancín anular–meñique</td><td>Barra de 3 agujeros con 2 puntos marcados.</td><td>28 × 9 × 2</td></tr><tr><td><b>P29</b></td><td>Biela del cuerno</td><td>Barrita plana de 2 agujeros, la más corta.</td><td>18 × 9 × 2</td></tr><tr><td><b>P30–P33</b></td><td>Bieleta (×4, iguales)</td><td>Barrita con un ojo PLANO (va al balancín) y un ojo PARADO (va en la palanca del dedo).</td><td>26 × 15 × 6</td></tr><tr><td><b>P42, P43, P45</b></td><td>Tapones (×3)</td><td>Cilindritos con la curva de la mano; opcionales.</td><td>5 × 5 × 5</td></tr></tbody></table></div>
+    <p class="gris" style="font-size:13px;margin-top:8px">Medidas de la caja que la contiene (largo × ancho × alto), tomadas de las STL. Agujeros grandes Ø2.8: el tornillo pasa libre. Agujeros chicos Ø1.9: ahí se rosca el tornillo; no se agrandan.</p>
   </div>
 </section>
 
@@ -409,7 +396,7 @@
   <div class="ancho">
     <div class="eti">04 · Manual de armado</div>
     <h2 class="media">Paso a paso, sin perderse</h2>
-    <p class="grande">55 pasos en 10 fases, del primer tornillo hasta ponérsela. En cada paso: qué piezas y tornillos necesitas, qué hacer, qué revisar antes de seguir y los errores comunes. En el 3D lo nuevo sale en <b style="color:#E8822A;font-weight:500">naranja</b> y las flechas naranjas marcan por dónde entra cada tornillo. Gíralo con el mouse o el dedo, acerca con la rueda y cambia de vista con los botones. Tu avance se guarda en este navegador.</p>
+    <p class="grande">46 pasos en 10 fases, del primer tornillo hasta ponérsela. En cada paso: qué piezas y tornillos necesitas, qué hacer, qué revisar antes de seguir y los errores comunes. En el 3D lo nuevo sale en <b style="color:#E8822A;font-weight:500">naranja</b> y las flechas naranjas marcan por dónde entra cada tornillo. Gíralo con el mouse o el dedo, acerca con la rueda y cambia de vista con los botones. Tu avance se guarda en este navegador.</p>
     <div class="fases" id="fasesMan"></div>
     <div class="avance"><i id="avanceMan"></i></div>
     <div class="manual">
@@ -485,7 +472,7 @@
   <span>HAND-E · Prótesis izquierda de Adrián · 2026</span>
   <span class="aviso">Diseño de prueba. Antes de usarla todos los días, debe revisarla un protesista: ajuste del socket, piel y sujeción.</span></footer>
 <script src="three.min.js"></script>
-<script src="modelo.js?v=202611232358"></script>
-<script src="app.js?v=202611232358"></script>
+<script src="modelo.js?v=202611250746"></script>
+<script src="app.js?v=202611250746"></script>
 </body>
 </html>

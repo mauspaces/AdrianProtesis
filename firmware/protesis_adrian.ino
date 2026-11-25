@@ -60,8 +60,8 @@ static_assert(MODELO_N == 5, "modelo_emg.h debe tener 5 rasgos");
 
 #define VERSION_FW "v8"
 const int PIN_EMG = A0, PIN_BAT = A1, PIN_MANO = D2, PIN_PULGAR = D3, PIN_MUNECA = D4, PIN_LED = LED_BUILTIN;
-const float MANO_ABIERTA = 0.0, MANO_REPOSO = 16.0, MANO_CERRADA = 80.0;   // grados del servo de los dedos
-const float PUL_A = 25.0, PUL_C = 155.0;                      // grados del servo del pulgar: abierto / cerrado (pinza)
+const float MANO_ABIERTA = 0.0, MANO_REPOSO = 16.0, MANO_CERRADA = 64.0;   // grados del servo de los dedos. Mano v6: a 63° los 4 dedos ya cerraron completos (carro 8.7 mm); más allá el MG995 empuja contra el fondo y puede romper el PLA
+const float PUL_A = 25.0, PUL_C = 126.0;                      // grados del servo del pulgar: abierto / cerrado (pinza). Mano v6: la oreja del pulgar subió 8 mm y el servo gira 101° (antes 155°)
 const float ADELANTO = 0.8;                                    // el pulgar llega a cerrado cuando los dedos van al 80 %
 const float MUNECA_NEUTRA = 90.0, MUNECA_LIMITE = 77.0;        // grados del servo de la muñeca (tope físico a 80°)
 const int MUNECA_SENTIDO = 1;                                  // 1 o -1 (para que "positivo" sea pronación)
