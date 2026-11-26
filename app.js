@@ -547,11 +547,11 @@
     const raiz = (f, x0, lo, hi) => { let px = x0 + lo, pv = f(px); for (let x = x0 + lo + 0.5; x <= x0 + hi; x += 0.5) { const v = f(x); if (Math.sign(v) !== Math.sign(pv)) { let a = px, b = x; for (let k = 0; k < 30; k++) { const m = (a + b) / 2; if (Math.sign(f(m)) === Math.sign(f(a))) a = m; else b = m; } return (a + b) / 2; } px = x; pv = v; } return x0; };
     const res = c => { let b = 0, cc = 0, ph = 90; for (let i = 1; i <= 30; i++) { const a = rad(47 * c * i / 30); b = raiz(x => d(w2(a, rad(x), Cl), G) - LGC, b, -3, 25); cc = raiz(x => d(w3(a, rad(b), rad(x), Fl), w1(a, El)) - LEF, cc, -3, 25); ph = raiz(x => d(ad(Sv, [rh * Math.cos(rad(x)), rh * Math.sin(rad(x))]), w1(a, Kl)) - LHK, ph, -25, 25); } return [47 * c, b, cc, ph]; };
     const W = p => ad(K, p), ln = (id, p, q) => { const l = $(id); l.setAttribute('x1', p[0]); l.setAttribute('y1', p[1]); l.setAttribute('x2', q[0]); l.setAttribute('y2', q[1]); };
-    function dib(c) { const [a, b, cc, ph] = res(c), A = rad(a), B = rad(b), C = rad(cc);
+    function dib(c) { const [a, , , ph] = res(c), b = 30, cc = 20, A = rad(a);   // (v6.1) dedo de UNA pieza: curva fija (30° y 20°), sólo gira el nudillo
       $('dB1').setAttribute('transform', `translate(${K[0]},${K[1]}) rotate(${a})`); $('dB2').setAttribute('transform', `translate(${L1},0) rotate(${b})`); $('dB3').setAttribute('transform', `translate(${L2},0) rotate(${cc})`);
-      const g = W(G), cw = W(w2(A, B, Cl)), e = W(w1(A, El)), f = W(w3(A, B, C, Fl)), k = W(w1(A, Kl)), sw = W(Sv), h = ad(sw, [rh * Math.cos(rad(ph)), rh * Math.sin(rad(ph))]);
-      ln('dL1', g, cw); ln('dL2', e, f); ln('dL3', h, k); ln('dCuerno', sw, h); $('dEje').setAttribute('cx', sw[0]); $('dEje').setAttribute('cy', sw[1]);
-      $('dPts').innerHTML = [g, cw, e, f, h, k].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3.4"/>`).join(''); $('dLect').textContent = `nudillo ${a.toFixed(0)}° · media ${b.toFixed(0)}° · punta ${cc.toFixed(0)}°`; }
+      const k = W(w1(A, Kl)), sw = W(Sv), h = ad(sw, [rh * Math.cos(rad(ph)), rh * Math.sin(rad(ph))]);
+      $('dL1').style.display = 'none'; $('dL2').style.display = 'none'; document.querySelectorAll('#dB2 > circle, #dB3 > circle').forEach(o => { o.style.display = 'none'; }); ln('dL3', h, k); ln('dCuerno', sw, h); $('dEje').setAttribute('cx', sw[0]); $('dEje').setAttribute('cy', sw[1]);
+      $('dPts').innerHTML = [h, k].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3.4"/>`).join(''); $('dLect').textContent = `nudillo ${a.toFixed(0)}° · el dedo es una sola pieza (curva fija)`; }
     let an = false, t = 0, pr = 0;
     $('dC').oninput = e => { an = false; $('dAnim').textContent = '▶ Animar'; dib(e.target.value / 100); };
     $('dAnim').onclick = () => { an = !an; $('dAnim').textContent = an ? '❚❚ Pausa' : '▶ Animar'; pr = performance.now(); if (an) requestAnimationFrame(paso); };
